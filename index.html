@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clayton Rodrigues Souza | Blog Pessoal</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="home">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html" class="active">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container main-content">
+      <div class="home-media-layout">
+        <aside class="home-video-wrap" aria-label="Apresentação do Tinho">
+          <video class="home-video" src="imagens/apresentacaotinho.mp4" autoplay muted loop playsinline controls preload="metadata"></video>
+        </aside>
+
+      <section class="carousel" aria-label="Notícias em destaque">
+        <div class="carousel-track" id="carouselTrack">
+          <article class="carousel-slide active searchable-item" data-tags="ia azure ai foundry accenture microsoft">
+            <img src="imagens/card1.png" alt="Profissionais discutindo soluções de inteligencia artificial" />
+            <div class="slide-content">
+              <p class="slide-meta">22 julho, 2025 · Microsoft News</p>
+              <h2>Accenture impulsiona uso responsável da IA com Azure AI Foundry, reduzindo em até 50% o tempo de lançamento de soluções</h2>
+              <p>A Accenture avança em IA generativa com foco em governanca, seguranca e ganho operacional usando Azure AI Foundry.</p>
+            </div>
+          </article>
+          <article class="carousel-slide searchable-item" data-tags="pmes copilot excel ia produtividade microsoft">
+            <img src="imagens/card2.png" alt="Profissional trabalhando com notebook em ambiente corporativo" />
+            <div class="slide-content">
+              <p class="slide-meta">24 julho, 2025 · Microsoft News</p>
+              <h2>Cinco maneiras para PMEs tomarem decisões mais rápidas e inteligentes usando a IA</h2>
+              <p>Dicas praticas para pequenas e medias empresas usarem Copilot no Excel e melhorarem analise, controle e tomada de decisao.</p>
+            </div>
+          </article>
+          <article class="carousel-slide searchable-item" data-tags="azure seguranca dados redes desempenho brasil microsoft">
+            <img src="imagens/card3.png" alt="Especialista analisando painel tecnico em tela" />
+            <div class="slide-content">
+              <p class="slide-meta">30 junho, 2025 · Microsoft News</p>
+              <h2>Novas soluções do Microsoft Azure com foco em segurança de dados, otimização de redes e desempenho estão disponíveis no Brasil</h2>
+              <p>Atualizacoes no Azure no Brasil trazem recursos para proteger dados, otimizar redes e elevar desempenho em cargas empresariais.</p>
+            </div>
+          </article>
+          <article class="carousel-slide searchable-item" data-tags="dow copilot economia custos cadeia suprimentos ia">
+            <img src="imagens/card4.png" alt="Painel de analise com agentes de IA para faturamento de frete" />
+            <div class="slide-content">
+              <p class="slide-meta">25 junho, 2025 · Microsoft News</p>
+              <h2>Impacto da IA na Dow: Copilot identifica milhões em economia de custos</h2>
+              <p>A Dow usa Copilot e agentes para auditar faturas de frete, encontrar anomalias e liberar economias significativas na operacao.</p>
+            </div>
+          </article>
+        </div>
+        <div class="carousel-controls">
+          <button id="prevSlide" aria-label="Notícia anterior">
+            <span class="microsoft-logo" aria-hidden="true">
+              <span class="sq red"></span>
+              <span class="sq green"></span>
+              <span class="sq blue"></span>
+              <span class="sq yellow"></span>
+            </span>
+          </button>
+          <div class="dots" id="carouselDots"></div>
+          <button id="nextSlide" aria-label="Próxima notícia">
+            <span class="microsoft-logo" aria-hidden="true">
+              <span class="sq red"></span>
+              <span class="sq green"></span>
+              <span class="sq blue"></span>
+              <span class="sq yellow"></span>
+            </span>
+          </button>
+        </div>
+      </section>
+
+        <section class="info-grid" aria-label="Informações principais">
+          <article class="info-card searchable-item" data-tags="sobre carreira historia">
+            <h3>Introdução ao GitHub Copilot</h3>
+            <p>O GitHub Copilot é um assistente de codificação alimentado por IA que ajuda você a gerar, entender, refatorar e depurar código em tempo real usando sugestões embutidas e uma experiência de chat de conversa, diretamente do seu ambiente de desenvolvimento.</p>
+            <a href="https://learn.microsoft.com/pt-br/training/modules/introduction-to-github-copilot/" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+          </article>
+          <article class="info-card searchable-item" data-tags="eventos comunidade networking">
+            <h3>Agenda de eventos Microsoft</h3>
+            <p>Veja a agenda de eventos da Microsoft oferece conferências, webinars e treinamentos sobre inovações tecnológicas e IA, Inclui grandes eventos como Microsoft Build, Ignite e diversos workshops técnicos focados em nuvem e desenvolvimento.</p>
+            <a href="eventos.html">Ler mais →</a>
+          </article>
+          <article class="info-card searchable-item" data-tags="dicas produtividade devops">
+            <h3>O que é o Microsoft Azure?</h3>
+            <p>O Microsoft Azure, lançado em 2010, marcou uma mudança crucial dos data centers locais para a computação em nuvem. Ao oferecer às empresas uma rede global de data centers mantidos e gerenciados pela Microsoft, o Azure reduziu o tempo e o custo associados à manutenção da infraestrutura local.</p>
+            <a href="https://azure.microsoft.com/en-gb/resources/cloud-computing-dictionary/what-is-azure/?ef_id=_k_1904a1cfb08e1e23ba65c80bbf5e3766_k_&OCID=AIDcmmzmnb0182_SEM__k_1904a1cfb08e1e23ba65c80bbf5e3766_k_&msclkid=1904a1cfb08e1e23ba65c80bbf5e3766" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+          </article>
+          <article class="info-card searchable-item" data-tags="contato feedback comentarios">
+            <h3>Participe do blog</h3>
+            <p>Deixe seu comentário para contribuir com a comunidade e enriquecer os debates. E se quiser aprofundar ainda mais seus estudos e acompanhar meus conteúdos, acesse também minhas redes:<br />📘 Simulados na Udemy<br />🎥 Canal no YouTube<br />📲 Instagram Oficial<br />💼 LinkedIn Profissional</p>
+            <a href="#interacao">Comentar agora →</a>
+          </article>
+        </section>
+      </div>
+
+      <section id="interacao" class="form-section" aria-label="Inscrição e comentários">
+        <h2>Inscreva-se para receber novidades</h2>
+        <form id="commentForm" class="comment-form">
+          <div class="field">
+            <label for="name">Nome</label>
+            <input id="name" name="name" type="text" required />
+            <button type="button" id="subscribeButton" class="subscribe-button">Enviar inscrição</button>
+          </div>
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input id="email" name="email" type="email" />
+          </div>
+          <h2 class="full-width">Compartilhe ideias e elogios <a href="dicas.html">(Visualize em Dicas)</a></h2>
+          <div class="field full-width">
+            <label for="comment">Comentário</label>
+            <textarea id="comment" name="comment" rows="4" required></textarea>
+          </div>
+          <button type="submit">Enviar comentário</button>
+        </form>
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+      </section>
+
+      <section class="info-grid promo-news-grid" aria-label="Notícias e canais oficiais">
+        <article class="info-card promo-card promo-udemy searchable-item" data-tags="udemy simulados cursos">
+          <h3>Simulados na Udemy</h3>
+          <p>Acesse meus simulados na Udemy para acelerar seus estudos com prática direcionada e foco em aprovação.</p>
+          <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+        </article>
+
+        <article class="info-card promo-card promo-youtube searchable-item" data-tags="youtube canal videos devops">
+          <h3>Canal no YouTube</h3>
+          <p>Conteúdos em vídeo com dicas práticas, passo a passo e experiências reais do dia a dia em tecnologia.</p>
+          <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+        </article>
+
+        <article class="info-card promo-card promo-instagram searchable-item" data-tags="instagram novidades reels tecnologia">
+          <h3>Instagram Oficial</h3>
+          <p>Novidades rápidas, bastidores e conteúdos curtos para acompanhar meus projetos e atualizações.</p>
+          <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+        </article>
+
+        <article class="info-card promo-card promo-linkedin searchable-item" data-tags="linkedin carreira cloud devops">
+          <h3>LinkedIn Profissional</h3>
+          <p>Publicações técnicas, artigos e insights sobre Cloud, DevOps e evolução de carreira na área de tecnologia.</p>
+          <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer">Ler mais →</a>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

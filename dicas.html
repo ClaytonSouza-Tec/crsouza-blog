@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dicas | Clayton Rodrigues Souza</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="dicas">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>DevOps | Cloud | Automação | IA Aplicada</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html" class="active">Dicas</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container page-content searchable-list">
+      <section class="page-hero searchable-item" data-tags="dicas certificacao microsoft azure fundamentals az-900">
+        <h2>Dicas</h2>
+        <p>Uma certificação em alta para começar na trilha Microsoft é a AZ-900. Ela ajuda a consolidar fundamentos de Cloud, serviços do Azure, segurança, governança e modelos de custo com uma base forte para as próximas certificações.</p>
+      </section>
+
+      <section class="tips-grid">
+        <article class="tip-card searchable-item" data-tags="terraform infraestrutura codigo desenvolvimento">
+          <h3>Terraform para infraestrutura reproduzível</h3>
+          <p>Organize módulos pequenos, use variáveis com nomes consistentes e valide o plano antes do apply para reduzir risco em mudanças de infraestrutura.</p>
+          <a href="https://developer.hashicorp.com/terraform/docs" target="_blank" rel="noopener noreferrer">Leia mais →</a>
+        </article>
+        <article class="tip-card searchable-item" data-tags="python desenvolvimento scripts automacao">
+          <h3>Python para automação e produtividade</h3>
+          <p>Prefira scripts pequenos, funções bem separadas e uso de ambientes virtuais para manter automações simples de evoluir e fáceis de compartilhar.</p>
+          <a href="https://docs.python.org/pt-br/3/tutorial/" target="_blank" rel="noopener noreferrer">Leia mais →</a>
+        </article>
+        <article class="tip-card searchable-item" data-tags="github desenvolvimento repositorio pull request actions">
+          <h3>GitHub com fluxo limpo de colaboração</h3>
+          <p>Use branches curtas, mensagens de commit objetivas e pull requests pequenos para acelerar revisão e reduzir conflito entre mudanças paralelas.</p>
+          <a href="https://docs.github.com/pt" target="_blank" rel="noopener noreferrer">Leia mais →</a>
+        </article>
+      </section>
+
+      <section class="comments-section comments-section-light">
+        <h3>Comentários da comunidade</h3>
+        <div id="commentsList" class="comments-list"></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

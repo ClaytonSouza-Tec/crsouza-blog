@@ -1,0 +1,15 @@
+{
+  "name": "crsouza-blog",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Blog pessoal com inscrições e conteúdo estático",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^4.21.2",
+    "sqlite3": "^5.1.7"
+  }
+}
