@@ -5,11 +5,13 @@
   "description": "Blog pessoal com inscrições e conteúdo estático",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "send:news": "node scripts/send-newsletter-on-update.js --force"
   },
   "dependencies": {
     "dotenv": "^17.3.1",
     "express": "^4.21.2",
+    "nodemailer": "^6.10.1",
     "sqlite3": "^5.1.7"
   }
 }

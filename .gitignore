@@ -1,5 +1,6 @@
 node_modules/
 npm-debug.log*
 .env
+data/last-newsletter-commit.txt
 .DS_Store
 Thumbs.db

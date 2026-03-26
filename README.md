@@ -79,13 +79,62 @@ Passos:
 npm install
 ```
 
-2. Inicie o servidor:
+2. Crie o arquivo `.env` com base no `.env.example` e preencha a configuracao SMTP.
+
+Exemplo para Brevo SMTP:
+
+```env
+PORT=3000
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu-login-smtp-brevo
+SMTP_PASS=sua-chave-smtp-brevo
+MAIL_FROM=CRSouza Blog <seu-remetente-verificado@seudominio.com>
+MAIL_REPLY_TO=seu-remetente-verificado@seudominio.com
+MAIL_NOTIFY_TO=
+BLOG_URL=http://localhost:3000/index.html
+```
+
+Observacoes sobre o SMTP:
+- `MAIL_FROM` deve usar um remetente valido e, idealmente, verificado no Brevo.
+- `MAIL_NOTIFY_TO` e opcional. Se preenchido, recebe aviso a cada nova inscricao.
+- `BLOG_URL` define o link usado no e-mail de noticias para "Ler no Blog".
+- O backend envia um e-mail de confirmacao para o usuario inscrito.
+
+## Envio automatico de noticias
+
+O projeto agora envia e-mails em 2 cenarios:
+- Quando o visitante se inscreve no blog pelo formulario.
+- Quando as 4 noticias do carrossel da home forem atualizadas e voce fizer um commit com a mensagem exata `Update News`.
+
+Para o disparo automatico no commit, o repositorio usa um hook versionado em `.githooks/post-commit`.
+
+Ative localmente com:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Regras do envio de noticias:
+- O hook roda apenas quando o commit mais recente se chama `Update News`.
+- Ele verifica se `index.html` foi alterado nesse commit.
+- Ele lê as 4 noticias do carrossel da home e envia para todos os inscritos.
+- O assunto do e-mail e `Novas noticias no CRSouza Blog`.
+
+Para testar manualmente sem depender de commit:
+
+```bash
+npm run send:news
+```
+
+3. Inicie o servidor:
 
 ```bash
 npm start
 ```
 
-3. Abra no navegador:
+4. Abra no navegador:
 
 - `http://localhost:3000`
 
