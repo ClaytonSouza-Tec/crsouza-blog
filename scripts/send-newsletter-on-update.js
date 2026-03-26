@@ -7,9 +7,7 @@ const { execFileSync } = require("child_process");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const {
-  openDatabase,
-  initializeDatabase,
-  closeDatabase,
+  initializeDataStore,
   listSubscribers,
   DATA_DIR
 } = require("../lib/subscribers");
@@ -121,16 +119,15 @@ async function main() {
   }
 
   if (!isMailConfigured()) {
-    console.log("[NEWSLETTER] SMTP não configurado. Nenhum e-mail será enviado.");
+    console.log("[NEWSLETTER] Serviço de e-mail não configurado. Nenhum e-mail será enviado.");
     return;
   }
 
   const newsItems = extractCarouselNews();
-  const db = openDatabase();
 
   try {
-    await initializeDatabase(db);
-    const subscribers = await listSubscribers(db, { onlyEmail });
+    await initializeDataStore();
+    const subscribers = await listSubscribers({ onlyEmail });
 
     if (!subscribers.length) {
       console.log("[NEWSLETTER] Nenhum inscrito encontrado para envio.");
@@ -165,8 +162,9 @@ async function main() {
     }
 
     console.log(`[NEWSLETTER] Envio concluído. Sucessos: ${sentCount}. Falhas: ${failedCount}.`);
-  } finally {
-    await closeDatabase(db);
+  } catch (error) {
+    console.error("[NEWSLETTER] Erro durante o envio:", error.message || error);
+    throw error;
   }
 }
 

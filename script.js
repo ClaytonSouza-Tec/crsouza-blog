@@ -284,9 +284,8 @@ function initSubscription() {
 
     try {
       if (isStaticHosting()) {
-        saveSubscriber({ name, email, createdAt: new Date().toISOString() });
         if (message) {
-          message.textContent = "Inscrição registrada com sucesso no modo GitHub Pages (armazenamento local do navegador).";
+          message.textContent = "No GitHub Pages, a inscrição não envia e-mail porque não há backend ativo. Para receber e-mail, use a versão com servidor.";
         }
         return;
       }

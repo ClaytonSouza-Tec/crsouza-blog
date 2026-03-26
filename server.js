@@ -3,12 +3,11 @@ const express = require("express");
 require("dotenv").config();
 
 const {
-  openDatabase,
-  initializeDatabase,
-  runQuery,
-  appendSubscriberToMarkdown,
-  appendCommentToMarkdown,
-  getCommentsFromMarkdown
+  initializeDataStore,
+  upsertSubscriber,
+  addComment,
+  listComments,
+  isAzureStorageConfigured
 } = require("./lib/subscribers");
 const {
   isMailConfigured,
@@ -18,7 +17,6 @@ const {
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
-const db = openDatabase();
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -58,18 +56,12 @@ app.post("/api/subscribe", async (req, res) => {
   const nowDate = new Date(now);
 
   try {
-    await runQuery(
-      db,
-      `
-      INSERT INTO subscribers (name, email, created_at, updated_at)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(email)
-      DO UPDATE SET name = excluded.name, updated_at = excluded.updated_at
-      `,
-      [name, email, now, now]
-    );
-
-    appendSubscriberToMarkdown(name, email, nowDate);
+    await upsertSubscriber({
+      name,
+      email,
+      createdAt: now,
+      updatedAt: now
+    });
 
     const mailResult = await sendSubscriptionConfirmationEmail({
       name,
@@ -108,7 +100,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ ok: true });
 });
 
-app.post("/api/comments", (req, res) => {
+app.post("/api/comments", async (req, res) => {
   const name = String(req.body?.name || "").trim();
   const comment = String(req.body?.comment || "").trim();
 
@@ -123,11 +115,14 @@ app.post("/api/comments", (req, res) => {
   }
 
   try {
-    const now = new Date();
-    appendCommentToMarkdown(name, now, comment);
+    const now = new Date().toISOString();
+    await addComment({
+      name,
+      text: comment,
+      createdAt: now
+    });
 
-    // Retorna todos os comentários atualizados
-    const allComments = getCommentsFromMarkdown();
+    const allComments = await listComments();
 
     res.status(201).json({
       ok: true,
@@ -140,9 +135,9 @@ app.post("/api/comments", (req, res) => {
   }
 });
 
-app.get("/api/comments", (req, res) => {
+app.get("/api/comments", async (req, res) => {
   try {
-    const comments = getCommentsFromMarkdown();
+    const comments = await listComments();
     res.status(200).json({ comments });
   } catch (error) {
     console.error("Erro ao buscar comentários:", error.message || error);
@@ -153,17 +148,18 @@ app.get("/api/comments", (req, res) => {
 if (isMailConfigured()) {
   verifyMailConfiguration()
     .then(() => {
-      console.log("SMTP configurado e validado com sucesso.");
+      console.log("Serviço de e-mail configurado e validado com sucesso.");
     })
     .catch((error) => {
-      console.error("Falha ao validar SMTP:", error.message || error);
+      console.error("Falha ao validar serviço de e-mail:", error.message || error);
     });
 } else {
-  console.warn("SMTP não configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS e MAIL_FROM no .env.");
+  console.warn("Serviço de e-mail não configurado. Defina AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM, ou mantenha SMTP_* para fallback local.");
 }
 
-initializeDatabase(db)
+initializeDataStore()
   .then(() => {
+    console.log(`Persistência ativa: ${isAzureStorageConfigured() ? "Azure Table Storage" : "SQLite/Markdown local"}`);
     app.listen(PORT, () => {
       console.log(`Servidor iniciado em http://localhost:${PORT}`);
     });

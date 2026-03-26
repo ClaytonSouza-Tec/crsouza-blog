@@ -2,6 +2,33 @@
 
 Site pessoal com foco em Cloud, DevOps, IA aplicada e conteúdo educacional.
 
+## Status atual da hospedagem
+
+O projeto deixou de ter GitHub Pages como ambiente principal.
+
+O cenário recomendado agora é:
+- Frontend e backend publicados no Azure App Service
+- Comentários e inscrições persistidos no Azure Table Storage
+- E-mails enviados pelo Azure Communication Services Email
+
+## Variáveis de ambiente para Azure App Service
+
+Configure estas variáveis no App Service:
+
+```env
+PORT=3000
+AZURE_STORAGE_CONNECTION_STRING=
+SUBSCRIBERS_TABLE_NAME=Subscribers
+COMMENTS_TABLE_NAME=Comments
+AZURE_EMAIL_CONNECTION_STRING=
+MAIL_FROM=
+NODE_ENV=production
+```
+
+Observação:
+- Se `AZURE_STORAGE_CONNECTION_STRING` não estiver definido, o projeto ainda consegue usar SQLite/markdown localmente.
+- Se `AZURE_EMAIL_CONNECTION_STRING` não estiver definido, o projeto ainda aceita fallback SMTP local via `SMTP_*`.
+
 Este projeto foi estruturado para funcionar em dois modos:
 - Modo estatico (GitHub Pages)
 - Modo completo com backend Node.js (Express + SQLite)
