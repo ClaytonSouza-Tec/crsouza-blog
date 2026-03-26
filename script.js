@@ -1,6 +1,69 @@
-const COMMENTS_KEY = "crsouzaBlogComments";
 const SUBSCRIBERS_KEY = "crsouzaBlogSubscribers";
 const SUBSCRIBE_API_ENDPOINT = "/api/subscribe";
+const COMMENTS_API_ENDPOINT = "/api/comments";
+const COMMENT_FLASH_MESSAGE_KEY = "crsouzaBlogCommentFlashMessage";
+const COMMENTS_MARKDOWN_PATH = "data/comentarios.md";
+
+function getApiBaseUrl() {
+  const { protocol, hostname, port } = window.location;
+
+  if (protocol === "file:") {
+    return "http://127.0.0.1:3000";
+  }
+
+  if ((hostname === "127.0.0.1" || hostname === "localhost") && port && port !== "3000") {
+    return `${window.location.protocol}//${hostname}:3000`;
+  }
+
+  return "";
+}
+
+function buildApiUrl(path) {
+  return `${getApiBaseUrl()}${path}`;
+}
+
+function parseCommentsMarkdown(markdown) {
+  return String(markdown || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|"))
+    .filter((line) => !/^\|\s*-/.test(line))
+    .map((line) => line.split("|").map((part) => part.trim()).filter(Boolean))
+    .filter((parts) => parts.length >= 4)
+    .filter((parts) => !(parts[0] === "Nome" && parts[1] === "Data"))
+    .map((parts) => ({
+      name: parts[0],
+      date: parts[1],
+      time: parts[2],
+      text: parts.slice(3).join(" | ")
+    }))
+    .filter((comment) => comment.name && comment.text)
+    .reverse();
+}
+
+async function loadCommentsFromMarkdown() {
+  const response = await fetch(COMMENTS_MARKDOWN_PATH, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Falha ao carregar comentarios.md");
+  }
+
+  const markdown = await response.text();
+  return parseCommentsMarkdown(markdown);
+}
+
+function setCommentFlashMessage(text) {
+  sessionStorage.setItem(COMMENT_FLASH_MESSAGE_KEY, String(text || ""));
+}
+
+function consumeCommentFlashMessage() {
+  const text = sessionStorage.getItem(COMMENT_FLASH_MESSAGE_KEY);
+  if (!text) {
+    return "";
+  }
+
+  sessionStorage.removeItem(COMMENT_FLASH_MESSAGE_KEY);
+  return text;
+}
 
 function escapeHtml(text) {
   return String(text)
@@ -24,21 +87,6 @@ function formatDateTime(isoDate) {
     dateStyle: "short",
     timeStyle: "short"
   }).format(date);
-}
-
-function getComments() {
-  try {
-    const raw = localStorage.getItem(COMMENTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveComment(comment) {
-  const comments = getComments();
-  comments.unshift(comment);
-  localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
 }
 
 function getSubscribers() {
@@ -129,7 +177,12 @@ function initCommentForm() {
     return;
   }
 
-  const message = document.getElementById("commentMessage") || document.getElementById("formMessage");
+  const message = document.getElementById("formMessage");
+  const pendingMessage = consumeCommentFlashMessage();
+
+  if (message && pendingMessage) {
+    message.textContent = pendingMessage;
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -139,89 +192,51 @@ function initCommentForm() {
     const commentText = String(formData.get("comment") || "").trim();
 
     if (!name) {
-      if (message) {
-        message.textContent = "Informe seu nome para enviar o comentário.";
-      }
+      if (message) message.textContent = "Informe seu nome para enviar o comentário.";
       return;
     }
 
     if (!commentText) {
-      if (message) {
-        message.textContent = "Escreva um comentário antes de enviar.";
-      }
+      if (message) message.textContent = "Escreva um comentário antes de enviar.";
       return;
     }
 
-    const saveCommentLocallyWithFeedback = (text) => {
-      saveComment({
-        name,
-        text: commentText,
-        createdAt: new Date().toISOString()
-      });
-
-      if (message) {
-        message.textContent = text;
-      }
-
-      form.reset();
-      renderCommentsOnTipsPage();
-    };
-
-    // Desabilita o botão durante o envio
     const submitBtn = form.querySelector("button[type='submit']");
     submitBtn.disabled = true;
     submitBtn.textContent = "Enviando...";
 
+    if (isStaticHosting()) {
+      if (message) {
+        message.textContent = "No GitHub Pages, novos comentários não podem ser enviados. Aqui são exibidos apenas os comentários já publicados.";
+      }
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Enviar comentário";
+      return;
+    }
+
     try {
-      if (isStaticHosting()) {
-        // Fallback para localStorage em GitHub Pages
-        saveCommentLocallyWithFeedback("Comentário enviado com sucesso!");
-        return;
-      }
+      const response = await fetch(buildApiUrl(COMMENTS_API_ENDPOINT), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, comment: commentText })
+      });
 
-      // Envia para API
-      let response;
-      try {
-        response = await fetch("/api/comments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ name, comment: commentText })
-        });
-      } catch {
-        // Fallback para localStorage se API falhar
-        saveCommentLocallyWithFeedback("Comentário registrado localmente (API indisponível).");
-        return;
-      }
-
-      let payload = null;
-      try {
-        payload = await response.json();
-      } catch {
-        payload = null;
-      }
+      let data;
+      try { data = await response.json(); } catch { data = null; }
 
       if (!response.ok) {
-        // Quando a rota não existe (ex.: Live Server), usa fallback local.
-        if (response.status === 404 || response.status === 405) {
-          saveCommentLocallyWithFeedback("Comentário registrado localmente (API indisponível).");
-          return;
-        }
-
-        throw new Error(payload?.error || "Falha ao enviar comentário.");
+        // Servidor respondeu com erro (validação, etc.) — exibe para o usuário
+        throw new Error(data?.error || "Falha ao enviar comentário.");
       }
 
-      if (message) {
-        message.textContent = payload?.message || "Comentário enviado com sucesso!";
-      }
-
+      // Sucesso: comentário salvo no comentarios.md via API
+      const successMessage = data?.message || "Comentário enviado com sucesso!";
+      setCommentFlashMessage(successMessage);
+      if (message) message.textContent = successMessage;
       form.reset();
       renderCommentsOnTipsPage();
     } catch (error) {
-      if (message) {
-        message.textContent = error.message || "Falha ao enviar comentário.";
-      }
+      if (message) message.textContent = error.message || "Falha ao enviar comentário.";
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Enviar comentário";
@@ -279,7 +294,7 @@ function initSubscription() {
       let response;
 
       try {
-        response = await fetch(SUBSCRIBE_API_ENDPOINT, {
+        response = await fetch(buildApiUrl(SUBSCRIBE_API_ENDPOINT), {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -322,92 +337,37 @@ function initSubscription() {
 
 function renderCommentsOnTipsPage() {
   const list = document.getElementById("commentsList");
-  if (!list) {
-    return;
-  }
+  if (!list) return;
 
-  // Estratégia em cascata:
-  // 1) API backend
-  // 2) arquivo markdown
-  // 3) localStorage
-  loadCommentsFromAPI(list);
+  loadAndRenderComments(list);
 }
 
-async function loadCommentsFromMarkdownFile(list) {
+async function loadAndRenderComments(list) {
+  let comments = [];
   try {
-    const response = await fetch("data/comentarios.md", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error("Falha ao carregar comentarios.md");
-    }
-
-    const markdown = await response.text();
-    const comments = parseCommentsMarkdown(markdown);
-
-    if (!comments.length) {
-      list.innerHTML = '<p class="empty-message">Ainda não há comentários.</p>';
-      return;
-    }
-
-    renderCommentsList(list, comments);
-  } catch (error) {
-    console.error("Erro ao carregar comentários do markdown:", error);
-
-    // Fallback final para localStorage local do navegador.
-    const comments = getComments();
-    if (!comments.length) {
-      list.innerHTML = '<p class="empty-message">Ainda não há comentários.</p>';
-      return;
-    }
-
-    renderCommentsList(list, comments);
-  }
-}
-
-function parseCommentsMarkdown(markdownContent) {
-  return String(markdownContent || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("|"))
-    .filter((line) => !line.includes("---"))
-    .map((line) => line.split("|").map((part) => part.trim()).filter(Boolean))
-    .filter((parts) => parts.length >= 4)
-    .filter((parts) => !(parts[0] === "Nome" && parts[1] === "Data"))
-    .map((parts) => ({
-      name: parts[0],
-      text: parts.slice(3).join(" | "),
-      when: `${parts[1]} ${parts[2]}`
-    }))
-    .reverse();
-}
-
-async function loadCommentsFromAPI(list) {
-  try {
-    const response = await fetch("/api/comments");
+    const response = await fetch(buildApiUrl(COMMENTS_API_ENDPOINT));
     if (!response.ok) {
       throw new Error("Falha ao carregar comentários");
     }
 
-    const data = await response.json();
-    const comments = data.comments || [];
-
-    if (!comments.length) {
-      list.innerHTML = '<p class="empty-message">Ainda não há comentários. Envie o primeiro!</p>';
+    let data;
+    try { data = await response.json(); } catch { data = null; }
+    comments = data?.comments || [];
+  } catch {
+    try {
+      comments = await loadCommentsFromMarkdown();
+    } catch {
+      list.innerHTML = '<p class="empty-message">Não foi possível carregar comentários no momento.</p>';
       return;
     }
-
-    // Converte formato da API para formato esperado pelo renderCommentsList
-    const formattedComments = comments.map((c) => ({
-      name: c.name,
-      text: c.text,
-      createdAt: new Date(`${c.date} ${c.time}`).toISOString()
-    }));
-
-    renderCommentsList(list, formattedComments);
-  } catch (error) {
-    console.error("Erro ao carregar comentários:", error);
-    // Se API não estiver disponível (ex.: Live Server), tenta o markdown.
-    loadCommentsFromMarkdownFile(list);
   }
+
+  if (!comments.length) {
+    list.innerHTML = '<p class="empty-message">Ainda não há comentários. Seja o primeiro!</p>';
+    return;
+  }
+
+  renderCommentsList(list, comments);
 }
 
 function renderCommentsList(list, comments) {
@@ -415,7 +375,9 @@ function renderCommentsList(list, comments) {
     .map((comment) => {
       const safeName = escapeHtml(comment.name || "Leitor");
       const safeText = escapeHtml(comment.text || "");
-      const when = escapeHtml(comment.when || formatDateTime(comment.createdAt || new Date().toISOString()));
+      const when = escapeHtml(
+        comment.when || `${comment.date} ${comment.time}` || formatDateTime(comment.createdAt || new Date().toISOString())
+      );
 
       return `
         <article class="comment-item searchable-item" data-tags="comentario comunidade dica">
