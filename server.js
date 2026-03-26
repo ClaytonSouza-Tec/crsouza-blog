@@ -84,10 +84,16 @@ app.post("/api/subscribe", async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao processar inscricao:", error.message || error);
+    console.error("Stack trace:", error.stack);
 
-    if (/smtp|auth|mail|greeting|connection|timeout|certificate/i.test(String(error.message || ""))) {
+    // Verifica se o erro é de envio de e-mail
+    const errorMsg = String(error.message || "").toLowerCase();
+    const isEmailError = /smtp|auth|mail|greeting|connection|timeout|certificate|azure|communication|email/i.test(errorMsg);
+    
+    if (isEmailError) {
+      console.error("[Subscribe] Erro identificado como sendo de e-mail:", error.message);
       res.status(502).json({
-        error: "Inscrição registrada, mas houve falha no envio do e-mail. Verifique a configuração SMTP."
+        error: "Inscrição registrada, mas houve falha no envio do e-mail. Tente novamente em alguns momentos."
       });
       return;
     }
@@ -153,6 +159,77 @@ app.get("/api/comments", async (req, res) => {
   } catch (error) {
     console.error("Erro ao buscar comentários:", error.message || error);
     res.status(500).json({ error: "Falha ao buscar comentários." });
+  }
+});
+
+app.get("/health/email-debug", async (req, res) => {
+  try {
+    const mailConfig = verifyMailConfiguration();
+    const result = await mailConfig;
+    
+    const azureEmailConnStr = process.env.AZURE_EMAIL_CONNECTION_STRING ? "✓ Configurado" : "✗ Não configurado";
+    const mailFrom = process.env.MAIL_FROM ? `✓ ${process.env.MAIL_FROM}` : "✗ Não configurado";
+    const smtpHost = process.env.SMTP_HOST ? "✓ Configurado" : "✗ Não configurado";
+    const nodeEnv = process.env.NODE_ENV || "não definido";
+    
+    res.status(200).json({
+      mailConfigured: result.enabled,
+      provider: result.provider,
+      environment: nodeEnv,
+      azure: {
+        connectionString: azureEmailConnStr,
+        mailFrom: mailFrom
+      },
+      smtp: {
+        host: smtpHost,
+        port: process.env.SMTP_PORT || "não definido"
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: "Falha ao verificar configuração de e-mail",
+      details: error.message
+    });
+  }
+});
+
+app.post("/health/test-email", async (req, res) => {
+  const toEmail = String(req.body?.email || "").trim();
+  
+  if (!toEmail) {
+    res.status(400).json({ error: "E-mail de teste é obrigatório (body: {email: 'test@example.com'})" });
+    return;
+  }
+  
+  try {
+    console.log(`[Test] Enviando e-mail de teste para ${toEmail}`);
+    
+    const result = await sendSubscriptionConfirmationEmail({
+      name: "Teste",
+      email: toEmail,
+      createdAt: new Date()
+    });
+    
+    if (!result.enabled) {
+      return res.status(503).json({
+        error: "E-mail não configurado",
+        details: "Configure AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM, ou SMTP_HOST/SMTP_USER/SMTP_PASS"
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      provider: result.provider,
+      message: `E-mail de teste enviado com sucesso para ${toEmail}`,
+      details: result
+    });
+  } catch (error) {
+    console.error("[Test] Erro ao enviar e-mail de teste:", error);
+    res.status(500).json({
+      error: "Falha ao enviar e-mail de teste",
+      message: error.message,
+      details: String(error)
+    });
   }
 });
 
