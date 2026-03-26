@@ -97,7 +97,18 @@ app.post("/api/subscribe", async (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  res.status(200).json({ ok: true });
+  const storageMode = isAzureStorageConfigured() ? "azure-table-storage" : "local-fallback";
+  const emailMode = process.env.AZURE_EMAIL_CONNECTION_STRING
+    ? "azure-communication-services"
+    : (isMailConfigured() ? "smtp" : "not-configured");
+
+  res.status(200).json({
+    ok: true,
+    storageMode,
+    emailMode,
+    usingAzureStorage: isAzureStorageConfigured(),
+    usingAzureEmail: Boolean(process.env.AZURE_EMAIL_CONNECTION_STRING)
+  });
 });
 
 app.post("/api/comments", async (req, res) => {
