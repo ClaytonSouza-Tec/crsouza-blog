@@ -1,4 +1,5 @@
 const COMMENTS_KEY = "crsouzaBlogComments";
+const SUBSCRIBERS_KEY = "crsouzaBlogSubscribers";
 const SUBSCRIBE_API_ENDPOINT = "/api/subscribe";
 
 function escapeHtml(text) {
@@ -38,6 +39,28 @@ function saveComment(comment) {
   const comments = getComments();
   comments.unshift(comment);
   localStorage.setItem(COMMENTS_KEY, JSON.stringify(comments));
+}
+
+function getSubscribers() {
+  try {
+    const raw = localStorage.getItem(SUBSCRIBERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSubscriber(subscriber) {
+  const list = getSubscribers();
+  const email = String(subscriber.email || "").toLowerCase();
+  const next = list.filter((item) => String(item.email || "").toLowerCase() !== email);
+  next.unshift(subscriber);
+  localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(next));
+}
+
+function isStaticHosting() {
+  const host = window.location.hostname.toLowerCase();
+  return window.location.protocol === "file:" || host.endsWith("github.io");
 }
 
 function isValidEmail(email) {
@@ -184,6 +207,14 @@ function initSubscription() {
     subscribeButton.textContent = "Enviando...";
 
     try {
+      if (isStaticHosting()) {
+        saveSubscriber({ name, email, createdAt: new Date().toISOString() });
+        if (message) {
+          message.textContent = "Inscrição registrada com sucesso no modo GitHub Pages (armazenamento local do navegador).";
+        }
+        return;
+      }
+
       const response = await fetch(SUBSCRIBE_API_ENDPOINT, {
         method: "POST",
         headers: {
@@ -200,8 +231,9 @@ function initSubscription() {
         message.textContent = "Inscrição realizada com sucesso! Seu cadastro foi registrado.";
       }
     } catch {
+      saveSubscriber({ name, email, createdAt: new Date().toISOString() });
       if (message) {
-        message.textContent = "Não foi possível concluir a inscrição agora. Tente novamente em instantes.";
+        message.textContent = "API indisponível no momento. Inscrição registrada localmente neste navegador.";
       }
     } finally {
       subscribeButton.disabled = false;
