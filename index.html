@@ -139,6 +139,13 @@
         <p id="formMessage" class="form-message" aria-live="polite"></p>
       </section>
 
+      <section class="blog-articles-grid" aria-label="Artigos de Blog">
+        <h2>Artigos Recentes do Blog</h2>
+        <div id="blogArticlesContainer" class="articles-container">
+          <!-- Notícias do blog carregadas dinamicamente -->
+        </div>
+      </section>
+
       <section class="info-grid promo-news-grid" aria-label="Notícias e canais oficiais">
         <article class="info-card promo-card promo-udemy searchable-item" data-tags="udemy simulados cursos">
           <h3>Simulados na Udemy</h3>
@@ -180,5 +187,73 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+      // Carregar artigos de blog na página inicial
+      async function loadBlogArticles() {
+        const articlesContainer = document.getElementById("blogArticlesContainer");
+        
+        try {
+          const response = await fetch(buildApiUrl("/api/news"));
+          if (!response.ok) throw new Error("Erro ao carregar notícias");
+          
+          const allNews = await response.json();
+          
+          // Filtrar apenas artigos do blog (IDs que começam com "news-blog-")
+          const blogArticles = allNews.filter(article => article.id.startsWith("news-blog-"));
+          
+          if (blogArticles.length === 0) {
+            articlesContainer.innerHTML = "<p>Nenhum artigo disponível</p>";
+            return;
+          }
+          
+          articlesContainer.innerHTML = "";
+          
+          blogArticles.forEach(article => {
+            const date = new Date(article.date);
+            const dateStr = date.toLocaleDateString("pt-BR");
+            const tags = article.tags ? article.tags.split(",").map(t => t.trim()) : [];
+            
+            const card = document.createElement("article");
+            card.className = "article-card";
+            card.innerHTML = `
+              <img src="${article.image || 'imagens/card1.png'}" alt="${article.title}" class="article-image" />
+              <div class="article-content">
+                <div class="article-meta">
+                  <span>${dateStr}</span>
+                  <span>${article.source || "Blog"}</span>
+                </div>
+                <h3>${article.title}</h3>
+                <p>${article.excerpt || article.content.substring(0, 150)}</p>
+                <div class="article-tags">
+                  ${tags.slice(0, 4).map(tag => `<span class="article-tag">${tag}</span>`).join("")}
+                </div>
+                <div class="article-cta">
+                  <button class="article-link" data-news-id="${article.id}">Ler mais</button>
+                </div>
+              </div>
+            `;
+            
+            // Evento de clique para abrir o modal
+            card.querySelector(".article-link").addEventListener("click", () => {
+              showNewsModal(article.id, allNews);
+              sendAnalyticsEvent({
+                eventType: "article_click",
+                articleId: article.id,
+                articleTitle: article.title,
+                pagePath: window.location.pathname
+              });
+            });
+            
+            articlesContainer.appendChild(card);
+          });
+        } catch (error) {
+          console.error("Erro ao carregar artigos:", error);
+          articlesContainer.innerHTML = "<p style='color: var(--muted);'>Erro ao carregar artigos</p>";
+        }
+      }
+      
+      // Carregar ao enterrar a página
+      document.addEventListener("DOMContentLoaded", loadBlogArticles);
+    </script>
   </body>
 </html>
