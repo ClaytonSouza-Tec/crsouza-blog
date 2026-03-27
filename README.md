@@ -12,7 +12,9 @@ Blog pessoal com frontend estatico e backend Node.js no Azure, com persistencia 
 6. Execucao local
 7. Deploy
 8. Operacao de newsletter
-9. Seguranca e privacidade
+9. Analytics para relatorio mensal
+10. Gerenciamento de notícias na Timeline
+11. Seguranca e privacidade
 
 ## Visao geral
 
@@ -156,6 +158,74 @@ Campos principais no relatorio:
 - `conversions.subscribeSubmitSuccess`
 - `conversions.commentSubmitSuccess`
 
+## Gerenciamento de noticias na Timeline
+
+A pagina Timeline oferece uma visualizacao estilo blog para todas as noticias do blog, contem:
+- **Timeline vertical**: exibe noticias ordenadas por data (mais recentes primeiro)
+- **Atualizacoes recentes**: sidebar mostrando os 5 ultimos artigos
+- **Tags interativas**: nuvem de tags para filtrar noticias por categoria
+- **Modal de leitura**: clique em qualquer noticia para ler o artigo completo
+
+### Endpoints de noticia
+
+Ingestao e consulta de noticias:
+
+```bash
+# Listar todas as noticias (paginado)
+GET /api/news?limit=50&offset=0
+
+# Obter noticia por ID
+GET /api/news/:id
+
+# Criar nova noticia (requer dados validos)
+POST /api/news
+Content-Type: application/json
+{
+  "id": "news-unique-id",
+  "title": "Titulo da noticia",
+  "content": "Conteudo completo em markdown ou HTML",
+  "excerpt": "Resumo para exibicao na timeline",
+  "date": "2026-03-27T10:00:00Z",
+  "source": "Microsoft News",
+  "image": "imagens/card1.png",
+  "tags": "tag1, tag2, tag3",
+  "featured": true
+}
+
+# Deletar noticia
+DELETE /api/news/:id
+```
+
+### Estrutura da tabela News
+
+Armazenamento em Azure Table Storage:
+
+| Campo | Tipo | Descricao |
+|-------|------|-----------|
+| PartitionKey | string | Ano-mes (YYYY-MM) para organizacao temporal |
+| RowKey | string | ID unico da noticia |
+| title | string | Titulo do artigo |
+| content | string | Conteudo completo |
+| excerpt | string | Resumo/preview |
+| date | string | Data ISO 8601 |
+| source | string | Fonte (ex: "Microsoft News", "Blog") |
+| image | string | URL da imagem principal |
+| tags | string | Tags separadas por virgula |
+| featured | boolean | Se aparece em destaque |
+| author | string | Autor do artigo |
+| timestamp | string | Data de criacao/atualizacao no banco |
+
+### Populando noticias de exemplo
+
+Execute localmente para popular dados iniciais:
+
+```bash
+# Certifique-se de ter AZURE_STORAGE_CONNECTION_STRING configurado
+npm run seed:news
+```
+
+Isso cria as noticias example.json nos dados da tabela News do Azure.
+
 ## Seguranca e privacidade
 
 Este README e publico e nao contem:
@@ -169,3 +239,4 @@ Boas praticas recomendadas:
 - habilitar HTTPS only no App Service
 - revisar CORS conforme dominio oficial
 - auditar periodicamente permissoes de acesso aos recursos Azure
+

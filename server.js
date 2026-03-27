@@ -21,6 +21,14 @@ const {
   trackEvent,
   getMonthlyReport
 } = require("./lib/analytics");
+const {
+  ensureNewsTable,
+  listNews,
+  getNewsById,
+  upsertNews,
+  deleteNews,
+  isNewsConfigured
+} = require("./lib/news");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -320,6 +328,75 @@ app.get("/api/comments", async (req, res) => {
   }
 });
 
+// News endpoints
+app.get("/api/news", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = Math.max(parseInt(req.query.offset) || 0, 0);
+    
+    const news = await listNews(limit, offset);
+    res.status(200).json(news);
+  } catch (error) {
+    console.error("Erro ao listar notícias:", error.message || error);
+    res.status(500).json({ error: "Falha ao listar notícias." });
+  }
+});
+
+app.get("/api/news/:id", async (req, res) => {
+  try {
+    const newsItem = await getNewsById(req.params.id);
+    if (!newsItem) {
+      res.status(404).json({ error: "Notícia não encontrada." });
+      return;
+    }
+    res.status(200).json(newsItem);
+  } catch (error) {
+    console.error("Erro ao buscar notícia:", error.message || error);
+    res.status(500).json({ error: "Falha ao buscar notícia." });
+  }
+});
+
+app.post("/api/news", async (req, res) => {
+  try {
+    const id = req.body?.id || String(Date.now());
+    const data = {
+      title: req.body?.title || "",
+      content: req.body?.content || "",
+      excerpt: req.body?.excerpt || "",
+      date: req.body?.date || new Date().toISOString(),
+      source: req.body?.source || "Blog",
+      image: req.body?.image || "",
+      tags: req.body?.tags || "",
+      featured: req.body?.featured || false
+    };
+
+    if (!data.title || !data.content) {
+      res.status(400).json({ error: "Título e conteúdo são obrigatórios." });
+      return;
+    }
+
+    await upsertNews(id, data);
+    res.status(201).json({ ok: true, id });
+  } catch (error) {
+    console.error("Erro ao criar notícia:", error.message || error);
+    res.status(500).json({ error: "Falha ao criar notícia." });
+  }
+});
+
+app.delete("/api/news/:id", async (req, res) => {
+  try {
+    const result = await deleteNews(req.params.id);
+    if (!result.deleted) {
+      res.status(404).json({ error: "Notícia não encontrada." });
+      return;
+    }
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error("Erro ao deletar notícia:", error.message || error);
+    res.status(500).json({ error: "Falha ao deletar notícia." });
+  }
+});
+
 app.get("/health/email-debug", async (req, res) => {
   try {
     const mailConfig = verifyMailConfiguration();
@@ -401,7 +478,9 @@ if (isMailConfigured()) {
 initializeDataStore()
   .then(async () => {
     await ensureAnalyticsTable();
+    await ensureNewsTable();
     console.log(`Persistência ativa: ${isAzureStorageConfigured() ? "Azure Table Storage" : "Não configurada"}`);
+    console.log(`Notícias: ${isNewsConfigured() ? "Azure Table Storage" : "Não configuradas"}`);
     app.listen(PORT, () => {
       console.log(`Servidor iniciado em http://localhost:${PORT}`);
     });
