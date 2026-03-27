@@ -120,28 +120,31 @@
 
           const article = document.createElement("article");
           article.className = "timeline-item";
+
+          const titleEl = item.url
+            ? `<a class="news-link" href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>`
+            : `<button class="news-link" data-news-id="${item.id}">${item.title}</button>`;
+
+          const readMoreEl = item.url
+            ? `<a class="read-more-btn" href="${item.url}" target="_blank" rel="noopener noreferrer">Ler mais →</a>`
+            : `<button class="read-more-btn" data-news-id="${item.id}">Ler mais →</button>`;
+
           article.innerHTML = `
             <div class="timeline-date">${dateStr}</div>
             <div class="timeline-dot"></div>
             <div class="timeline-content">
-              <h3>
-                <button class="news-link" data-news-id="${item.id}">
-                  ${item.title}
-                </button>
-              </h3>
+              <h3>${titleEl}</h3>
               <p class="timeline-meta">${item.source || "Blog"}</p>
               <p class="timeline-excerpt">${item.excerpt || item.content.substring(0, 150)}...</p>
-              <button class="read-more-btn" data-news-id="${item.id}">
-                Ler mais →
-              </button>
+              ${readMoreEl}
             </div>
           `;
 
           container.appendChild(article);
         });
 
-        // Adiciona listeners aos botões de notícia
-        document.querySelectorAll(".news-link, .read-more-btn").forEach((btn) => {
+        // Adiciona listeners apenas nos botões que abrem modal (sem url)
+        document.querySelectorAll(".news-link[data-news-id], .read-more-btn[data-news-id]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const newsId = btn.getAttribute("data-news-id");
             showNewsModal(newsId, news);
@@ -158,15 +161,20 @@
           const dateStr = date.toLocaleDateString("pt-BR");
           
           const li = document.createElement("li");
-          li.innerHTML = `
-            <button class="recent-link" data-news-id="${item.id}">
-              ${item.title}
-            </button>
-            <small>${dateStr}</small>
-          `;
-          li.querySelector(".recent-link").addEventListener("click", () => {
-            showNewsModal(item.id, news);
-          });
+          if (item.url) {
+            li.innerHTML = `
+              <a class="recent-link" href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+              <small>${dateStr}</small>
+            `;
+          } else {
+            li.innerHTML = `
+              <button class="recent-link" data-news-id="${item.id}">${item.title}</button>
+              <small>${dateStr}</small>
+            `;
+            li.querySelector(".recent-link").addEventListener("click", () => {
+              showNewsModal(item.id, news);
+            });
+          }
           list.appendChild(li);
         });
       }
