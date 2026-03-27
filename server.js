@@ -5,6 +5,7 @@ require("dotenv").config();
 const {
   initializeDataStore,
   upsertSubscriber,
+  isDuplicateSubscriberError,
   addComment,
   listComments,
   isAzureStorageConfigured
@@ -85,6 +86,11 @@ app.post("/api/subscribe", async (req, res) => {
   } catch (error) {
     console.error("Erro ao processar inscricao:", error.message || error);
     console.error("Stack trace:", error.stack);
+
+    if (isDuplicateSubscriberError(error)) {
+      res.status(409).json({ error: "E-mail já inscrito." });
+      return;
+    }
 
     // Verifica se o erro é de envio de e-mail
     const errorMsg = String(error.message || "").toLowerCase();
