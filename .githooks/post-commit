@@ -6,6 +6,10 @@ if [ -z "$REPO_ROOT" ]; then
   exit 0
 fi
 
+if [ "$ENABLE_LOCAL_NEWSLETTER_HOOK" != "true" ]; then
+  exit 0
+fi
+
 SCRIPT_PATH="$REPO_ROOT/scripts/send-newsletter-on-update.js"
 
 if command -v node >/dev/null 2>&1; then

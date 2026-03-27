@@ -133,9 +133,11 @@ Observacoes sobre o SMTP:
 
 O projeto agora envia e-mails em 2 cenarios:
 - Quando o visitante se inscreve no blog pelo formulario.
-- Quando as 4 noticias do carrossel da home forem atualizadas e voce fizer um commit com a mensagem exata `Update News`.
+- Quando as 4 noticias do carrossel da home forem atualizadas e voce fizer um commit com a mensagem exata `NEWS UPDATES`.
 
-Para o disparo automatico no commit, o repositorio usa um hook versionado em `.githooks/post-commit`.
+Para o disparo automatico no commit, o envio oficial acontece no GitHub Actions durante o push para `main`, usando as configuracoes do Azure Web App.
+
+O hook local em `.githooks/post-commit` fica desativado por padrao para evitar disparo acidental com configuracoes locais de SMTP. Ele so roda se a variavel `ENABLE_LOCAL_NEWSLETTER_HOOK=true` estiver definida no ambiente local.
 
 Ative localmente com:
 
@@ -144,8 +146,7 @@ git config core.hooksPath .githooks
 ```
 
 Regras do envio de noticias:
-- O hook roda apenas quando o commit mais recente se chama `Update News`.
-- Ele verifica se `index.html` foi alterado nesse commit.
+- O workflow roda apenas quando o commit mais recente se chama `NEWS UPDATES`.
 - Ele lê as 4 noticias do carrossel da home e envia para todos os inscritos.
 - O assunto do e-mail e `Novas noticias no CRSouza Blog`.
 
