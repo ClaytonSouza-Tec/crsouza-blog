@@ -69,7 +69,7 @@ jobs:
           az webapp config appsettings list \
             --name app-crsouza-blog \
             --resource-group rg-crsouza-blog \
-            --query "[?name=='AZURE_STORAGE_CONNECTION_STRING' || name=='COMMENTS_TABLE_NAME' || name=='SUBSCRIBERS_TABLE_NAME' || name=='AZURE_EMAIL_CONNECTION_STRING' || name=='MAIL_FROM' || name=='NODE_ENV'].[name,value]" \
+            --query "[?name=='AZURE_STORAGE_CONNECTION_STRING' || name=='COMMENTS_TABLE_NAME' || name=='SUBSCRIBERS_TABLE_NAME' || name=='AZURE_EMAIL_CONNECTION_STRING' || name=='MAIL_FROM' || name=='NODE_ENV' || name=='BLOG_URL'].[name,value]" \
             --output tsv > appsettings.tsv
 
           while IFS=$'\t' read -r name value; do

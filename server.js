@@ -6,6 +6,7 @@ const {
   initializeDataStore,
   upsertSubscriber,
   isDuplicateSubscriberError,
+  removeSubscriber,
   addComment,
   listComments,
   isAzureStorageConfigured
@@ -38,6 +39,64 @@ app.use(express.static(__dirname));
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
+
+app.get("/unsubscribe", async (req, res) => {
+  const email = String(req.query?.email || "").trim().toLowerCase();
+
+  if (!isValidEmail(email)) {
+    res.status(400).send(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cancelar inscrição</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; padding: 32px; background: #0f172a; color: #e2e8f0;">
+    <h1 style="color: #f8fafc;">Link inválido</h1>
+    <p>O link de cancelamento está inválido ou incompleto.</p>
+  </body>
+</html>`);
+    return;
+  }
+
+  try {
+    const result = await removeSubscriber(email);
+    const title = result.removed ? "Inscrição cancelada" : "Inscrição já cancelada";
+    const message = result.removed
+      ? `O e-mail ${email} foi removido com sucesso da lista de inscrições.`
+      : `O e-mail ${email} já não estava mais inscrito.`;
+
+    res.status(200).send(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${title}</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; padding: 32px; background: #0f172a; color: #e2e8f0;">
+    <div style="max-width: 640px; margin: 0 auto; background: #111827; border: 1px solid #334155; border-radius: 16px; padding: 24px;">
+      <h1 style="margin-top: 0; color: #f8fafc;">${title}</h1>
+      <p style="line-height: 1.6;">${message}</p>
+      <p><a href="/index.html" style="color: #38bdf8;">Voltar para o blog</a></p>
+    </div>
+  </body>
+</html>`);
+  } catch (error) {
+    console.error("Erro ao cancelar inscrição:", error.message || error);
+    res.status(500).send(`<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Erro ao cancelar inscrição</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; padding: 32px; background: #0f172a; color: #e2e8f0;">
+    <h1 style="color: #f8fafc;">Erro ao cancelar inscrição</h1>
+    <p>Não foi possível concluir o cancelamento neste momento.</p>
+  </body>
+</html>`);
+  }
+});
 
 app.post("/api/subscribe", async (req, res) => {
   const name = String(req.body?.name || "").trim();
