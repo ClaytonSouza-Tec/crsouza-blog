@@ -274,12 +274,12 @@ Com App Service, você não se preocupa com servidores:
 
 ## Exemplo: Deploy de Node.js
 
-```
-npm install
-npm start (porta em process.env.PORT)
-Deploy automático via GitHub Actions
-Seu app está online em minutos!
-```
+Passos para deploy:
+1. Clone o repositório
+2. Execute npm install
+3. Configure variáveis de ambiente
+4. Deploy automático via GitHub Actions
+5. Seu app está online em minutos!
 
 Azure App Service remove a complexidade de DevOps iniciante e deixa você focar em código!`,
     excerpt: "Descubra como hostear suas aplicações sem complexidade com Azure App Service.",
@@ -322,32 +322,19 @@ Exemplo:
 ## Estrutura de dados
 
 Diferente de SQL, você define apenas o que precisa:
-```
-Entity {
-  PartitionKey: "2026-03",
-  RowKey: "news-001",
-  title: "Meu artigo",
-  content: "...",
-  tags: "azure, storage",
-  timestamp: Date.now()
-}
-```
+- PartitionKey: "2026-03"
+- RowKey: "news-001"  
+- title: "Meu artigo"
+- content: "..."
+- tags: "azure, storage"
+- timestamp: Data
 
 ## CRUD básico
 
-**Create**: TableClient.upsertEntity(entity)
-**Read**: TableClient.getEntity(pk, rk)
-**Update**: TableClient.upsertEntity(entity, 'Replace')
-**Delete**: TableClient.deleteEntity(pk, rk)
-
-## Queries eficientes
-
-Sempre use PartitionKey nas queries:
-```
-filter: "PartitionKey eq '2026-03'"
-```
-
-Evite scans completos - defina boas partition keys!
+- Create: TableClient.upsertEntity(entity)
+- Read: TableClient.getEntity(pk, rk)
+- Update: TableClient.upsertEntity(entity, 'Replace')
+- Delete: TableClient.deleteEntity(pk, rk)
 
 ## Scaling automático
 
