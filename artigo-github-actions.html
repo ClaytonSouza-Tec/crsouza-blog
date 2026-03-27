@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Actions: Automação de CI/CD | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source github-source"><i class="fab fa-github"></i> GitHub</span>
+          <span class="artigo-data">27 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 6 min de leitura</span>
+        </div>
+        <h1>GitHub Actions: Automação de CI/CD do Zero</h1>
+        <p class="artigo-subtitulo">Aprenda a criar pipelines de integração e entrega contínua que executam automaticamente a cada commit, garantindo qualidade e agilidade no desenvolvimento.</p>
+      </div>
+
+      <img src="imagens/card2.png" alt="GitHub Actions CI/CD pipeline" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>O que é CI/CD?</h2>
+        <p>Continuous Integration (CI) e Continuous Deployment (CD) são práticas essenciais no desenvolvimento moderno. A ideia é simples: automatize tudo o que puder ser automatizado, para que você foque no que realmente importa — escrever bom código.</p>
+        <ul>
+          <li><strong>CI (Integração Contínua):</strong> a cada commit, o código é testado e validado automaticamente</li>
+          <li><strong>CD (Entrega Contínua):</strong> após validação, o código é deployado automaticamente para produção</li>
+        </ul>
+
+        <h2>Por que usar GitHub Actions?</h2>
+        <p>GitHub Actions é a solução nativa do GitHub para automação de workflows. Integrado diretamente ao repositório, ele elimina a necessidade de servidores externos como Jenkins ou CircleCI para a maioria dos projetos.</p>
+        <p>Vantagens principais:</p>
+        <ul>
+          <li>Gratuito para repositórios públicos e com generoso plano gratuito para privados</li>
+          <li>Integrado nativamente ao GitHub sem configuração extra</li>
+          <li>Marketplace com milhares de Actions prontas</li>
+          <li>Suporte a múltiplos sistemas operacionais (Linux, Windows, macOS)</li>
+          <li>Execução em paralelo de jobs</li>
+        </ul>
+
+        <h2>Estrutura de um Workflow</h2>
+        <p>Um workflow é um arquivo YAML dentro da pasta <code>.github/workflows/</code> do seu repositório. Ele define quando o pipeline roda e quais etapas executa.</p>
+        <p>A estrutura básica é composta por:</p>
+        <ul>
+          <li><strong>name:</strong> nome do workflow</li>
+          <li><strong>on:</strong> evento que dispara o workflow (push, pull_request, schedule...)</li>
+          <li><strong>jobs:</strong> grupos de steps que rodam em um runner</li>
+          <li><strong>steps:</strong> cada passo individual (checkout, instalar, testar, deployar)</li>
+        </ul>
+
+        <h2>Exemplo Prático: Node.js com Deploy no Azure</h2>
+        <p>Um workflow típico para uma aplicação Node.js que faz deploy no Azure App Service segue este fluxo:</p>
+        <ol>
+          <li>Disparo no push para a branch <code>main</code></li>
+          <li>Checkout do repositório com <code>actions/checkout</code></li>
+          <li>Configuração do Node.js na versão desejada</li>
+          <li>Instalação das dependências com <code>npm install</code></li>
+          <li>Execução dos testes com <code>npm test</code> (se existirem)</li>
+          <li>Build da aplicação com <code>npm run build</code> (se necessário)</li>
+          <li>Deploy no Azure usando o secret de publicação configurado</li>
+        </ol>
+
+        <h2>Segredos e Variáveis de Ambiente</h2>
+        <p>Nunca coloque credenciais diretamente no arquivo YAML. Use os <strong>GitHub Secrets</strong> para armazenar informações sensíveis como connection strings, tokens e senhas.</p>
+        <p>Para configurar um secret:</p>
+        <ol>
+          <li>Vá em Settings → Secrets and variables → Actions no seu repositório</li>
+          <li>Clique em "New repository secret"</li>
+          <li>Adicione o nome e o valor do secret</li>
+          <li>Referencie no workflow como <code>${{ secrets.NOME_DO_SECRET }}</code></li>
+        </ol>
+
+        <h2>Dicas de Boas Práticas</h2>
+        <ul>
+          <li>Use versões fixas das Actions (ex: <code>@v3</code>) para evitar mudanças inesperadas</li>
+          <li>Divida pipelines longos em jobs paralelos para reduzir tempo de execução</li>
+          <li>Use cache de dependências para acelerar builds repetidos</li>
+          <li>Configure notificações por e-mail ou Slack em caso de falha</li>
+          <li>Mantenha o arquivo de workflow versionado junto com o código</li>
+        </ul>
+
+        <h2>Conclusão</h2>
+        <p>GitHub Actions transforma seu repositório em uma máquina de automação. Com poucos minutos de configuração, você garante que todo código commitado passa por validação automática antes de chegar em produção. É o primeiro passo para um ciclo de desenvolvimento profissional e confiável.</p>
+      </div>
+
+      <div class="artigo-tags-footer">
+        <span class="artigo-chip">github</span>
+        <span class="artigo-chip">ci/cd</span>
+        <span class="artigo-chip">automação</span>
+        <span class="artigo-chip">devops</span>
+        <span class="artigo-chip">actions</span>
+      </div>
+
+      <div class="artigo-nav">
+        <a href="artigo-git-boas-praticas.html" class="artigo-nav-link">Próximo artigo: Git — Boas Práticas de Versionamento →</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

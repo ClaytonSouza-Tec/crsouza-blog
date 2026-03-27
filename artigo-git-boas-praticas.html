@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git: Boas Práticas de Versionamento | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source github-source"><i class="fab fa-github"></i> GitHub</span>
+          <span class="artigo-data">25 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 8 min de leitura</span>
+        </div>
+        <h1>Git: Boas Práticas de Versionamento para Times e Projetos Sérios</h1>
+        <p class="artigo-subtitulo">Domine branches, commits semânticos e pull requests para manter um histórico de código limpo e trabalhar bem em time.</p>
+      </div>
+
+      <img src="imagens/card3.png" alt="Git versionamento boas práticas" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Por que boas práticas de Git importam?</h2>
+        <p>Git é a ferramenta mais usada no desenvolvimento de software. Mas usá-lo mal gera histórico confuso, conflitos frequentes e dificuldade para rastrear problemas. Com boas práticas, você garante legibilidade, rastreabilidade e colaboração eficiente.</p>
+
+        <h2>Estratégia de Branching</h2>
+        <p>A escolha de como organizar branches impacta diretamente a produtividade do time. As duas estratégias mais comuns são:</p>
+
+        <h3>Git Flow — para projetos com ciclos de release</h3>
+        <ul>
+          <li><strong>main:</strong> código em produção, sempre estável</li>
+          <li><strong>develop:</strong> integração das features em desenvolvimento</li>
+          <li><strong>feature/nome:</strong> desenvolvimento de novas funcionalidades</li>
+          <li><strong>release/versão:</strong> preparação da próxima versão para produção</li>
+          <li><strong>hotfix/nome:</strong> correção urgente diretamente na main</li>
+        </ul>
+
+        <h3>Trunk-Based Development — para continuous deployment</h3>
+        <ul>
+          <li>Branch principal única (<code>main</code> ou <code>trunk</code>)</li>
+          <li>Feature branches de curta duração (idealmente menos de 1 dia)</li>
+          <li>Merges frequentes para evitar divergência</li>
+          <li>Deploy automatizado direto da main</li>
+        </ul>
+        <p>Para equipes pequenas e projetos com entrega contínua, Trunk-Based costuma ser mais ágil. Para times maiores com releases programadas, Git Flow oferece mais controle.</p>
+
+        <h2>Commits Semânticos</h2>
+        <p>Mensagens de commit claras são uma forma de documentação viva. O padrão <strong>Conventional Commits</strong> define um formato que facilita leitura, automação de changelog e versionamento semântico.</p>
+        <p>Formato: <code>tipo(escopo): descrição curta</code></p>
+        <ul>
+          <li><strong>feat:</strong> nova funcionalidade — <em>"feat(auth): adicionar login via OAuth"</em></li>
+          <li><strong>fix:</strong> correção de bug — <em>"fix(api): corrigir timeout na listagem de usuários"</em></li>
+          <li><strong>docs:</strong> apenas documentação — <em>"docs: atualizar README com variáveis de ambiente"</em></li>
+          <li><strong>style:</strong> formatação, sem mudança lógica — <em>"style: ajustar indentação no módulo de pagamento"</em></li>
+          <li><strong>refactor:</strong> refatoração sem nova feature — <em>"refactor: extrair lógica de validação para helper"</em></li>
+          <li><strong>test:</strong> testes — <em>"test: adicionar testes para serviço de email"</em></li>
+          <li><strong>chore:</strong> tarefas de manutenção — <em>"chore: atualizar dependências do projeto"</em></li>
+        </ul>
+
+        <h2>Pull Requests eficazes</h2>
+        <p>Pull Requests (ou Merge Requests no GitLab) são o momento onde o conhecimento é compartilhado e a qualidade é validada em time.</p>
+        <p>Para um PR eficaz:</p>
+        <ol>
+          <li><strong>Escopo pequeno e focado:</strong> um PR deve resolver um problema único e bem definido</li>
+          <li><strong>Descrição clara:</strong> explique o que foi feito, por que e como testar</li>
+          <li><strong>Checklist antes de abrir:</strong> testes passando, sem conflitos, sem código morto</li>
+          <li><strong>Pelo menos 1 revisor:</strong> dois pares de olhos sempre encontram mais</li>
+          <li><strong>Responda os comentários:</strong> PR não é monólogo, é conversa</li>
+        </ol>
+
+        <h2>Dicas essenciais do dia a dia</h2>
+        <ul>
+          <li>Use <code>git rebase</code> para manter histórico linear antes de mergear</li>
+          <li>Prefira <code>git pull --rebase</code> ao invés de <code>git pull</code> simples</li>
+          <li>Delete branches já mergeadas para manter o repositório limpo</li>
+          <li>Use <code>git stash</code> para guardar trabalho inacabado temporariamente</li>
+          <li>Configure <code>.gitignore</code> desde o início para não versionar arquivos desnecessários</li>
+          <li>Nunca faça force push em branches compartilhadas</li>
+        </ul>
+
+        <h2>Configurações recomendadas</h2>
+        <p>Configure seu Git corretamente desde o início:</p>
+        <ul>
+          <li>Defina seu nome e email com <code>git config --global</code></li>
+          <li>Configure seu editor padrão para escrever mensagens de commit</li>
+          <li>Use aliases para comandos frequentes (ex: <code>git st</code> para <code>git status</code>)</li>
+          <li>Ative a assinatura de commits com GPG em projetos importantes</li>
+        </ul>
+
+        <h2>Conclusão</h2>
+        <p>Boas práticas de Git não são burocracia — são investimento. Um histórico bem organizado facilita debugging, acelera onboarding de novos membros e torna o código mais seguro de evoluir. Comece com commits semânticos e PRs claros, e construa o resto gradualmente.</p>
+      </div>
+
+      <div class="artigo-tags-footer">
+        <span class="artigo-chip">git</span>
+        <span class="artigo-chip">github</span>
+        <span class="artigo-chip">versionamento</span>
+        <span class="artigo-chip">devops</span>
+        <span class="artigo-chip">boas práticas</span>
+      </div>
+
+      <div class="artigo-nav">
+        <a href="artigo-github-actions.html" class="artigo-nav-link">← Artigo anterior: GitHub Actions: Automação de CI/CD</a>
+        <a href="artigo-azure-app-service.html" class="artigo-nav-link">Próximo artigo: Azure App Service →</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

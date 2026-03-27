@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure App Service: Deploy Sem Complexidade | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source azure-source"><i class="fab fa-microsoft"></i> Azure</span>
+          <span class="artigo-data">22 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 7 min de leitura</span>
+        </div>
+        <h1>Azure App Service: Hospede Sua Aplicação Sem Gerenciar Servidores</h1>
+        <p class="artigo-subtitulo">Descubra como o Azure App Service simplifica o deploy de aplicações web com escalabilidade automática, HTTPS gratuito e integração nativa com GitHub Actions.</p>
+      </div>
+
+      <img src="imagens/card1.png" alt="Azure App Service hospedagem cloud" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>O que é Azure App Service?</h2>
+        <p>Azure App Service é uma plataforma PaaS (Platform as a Service) da Microsoft para hospedagem de aplicações web, APIs REST e backends mobile. Com ele, você faz deploy da sua aplicação sem se preocupar com sistema operacional, patches de segurança, escalabilidade de infraestrutura ou balanceamento de carga.</p>
+        <p>Você cuida do código. O Azure cuida do resto.</p>
+
+        <h2>Linguagens e Frameworks Suportados</h2>
+        <p>O App Service suporta nativamente as principais stacks de desenvolvimento:</p>
+        <ul>
+          <li><strong>Node.js</strong> (versões LTS suportadas)</li>
+          <li><strong>Python</strong> (3.x)</li>
+          <li><strong>.NET</strong> (Core e Framework)</li>
+          <li><strong>Java</strong> (8, 11, 17)</li>
+          <li><strong>PHP</strong></li>
+          <li><strong>Ruby</strong></li>
+          <li><strong>Docker</strong> (containers customizados)</li>
+        </ul>
+
+        <h2>Criando seu Primeiro App Service</h2>
+        <p>O processo de criação é direto pelo portal do Azure:</p>
+        <ol>
+          <li>Acesse o <strong>portal.azure.com</strong> e faça login</li>
+          <li>Clique em "Criar um recurso" → "Web" → "Aplicativo Web"</li>
+          <li>Defina um nome único para a aplicação (será parte da URL)</li>
+          <li>Escolha o stack de runtime (ex: Node.js 20)</li>
+          <li>Selecione o sistema operacional (Linux é recomendado para Node.js)</li>
+          <li>Escolha um Plano de Serviço de Aplicativo (define CPU, memória e preço)</li>
+          <li>Clique em "Analisar + criar"</li>
+        </ol>
+        <p>Após criar, sua aplicação já estará disponível numa URL pública no formato <code>seu-app.azurewebsites.net</code>.</p>
+
+        <h2>Configurando CI/CD com GitHub Actions</h2>
+        <p>A integração com GitHub é um dos pontos fortes do App Service. Para configurar deploy automático:</p>
+        <ol>
+          <li>No App Service, acesse "Centro de Implantação"</li>
+          <li>Selecione "GitHub" como fonte</li>
+          <li>Autorize o acesso ao seu repositório</li>
+          <li>Selecione a organização, repositório e branch</li>
+          <li>O Azure cria automaticamente um workflow no GitHub Actions</li>
+        </ol>
+        <p>A partir daí, cada push na branch configurada dispara um deploy automático.</p>
+
+        <h2>Configurações de Ambiente</h2>
+        <p>Variáveis de ambiente e segredos são gerenciados em "Configuração" → "Configurações do aplicativo". Nunca inclua credenciais no código — use as Application Settings do App Service para:</p>
+        <ul>
+          <li>Connection strings de banco de dados</li>
+          <li>Chaves de API e segredos</li>
+          <li>Variáveis de configuração (ex: NODE_ENV=production)</li>
+          <li>URLs de serviços externos</li>
+        </ul>
+        <p>Essas configurações ficam criptografadas e são injetadas como variáveis de ambiente em runtime.</p>
+
+        <h2>Domínio Customizado e HTTPS</h2>
+        <p>O App Service oferece certificado SSL/TLS gratuito para domínios customizados:</p>
+        <ol>
+          <li>Registre um domínio no seu provedor preferido (GoDaddy, Registro.br, etc.)</li>
+          <li>Adicione o domínio em "Domínios personalizados" no App Service</li>
+          <li>Configure os registros DNS apontando para o App Service</li>
+          <li>Ative o certificado gratuito em "Certificados TLS/SSL"</li>
+          <li>Force HTTPS em "Configurações TLS/SSL" → "HTTPS somente"</li>
+        </ol>
+
+        <h2>Planos de Serviço e Custos</h2>
+        <p>O App Service tem planos para todos os tamanhos de projeto:</p>
+        <ul>
+          <li><strong>F1 (Free):</strong> ideal para testes, sem SLA, recursos limitados</li>
+          <li><strong>B1 (Basic):</strong> para projetos pequenos de produção, ~$13/mês</li>
+          <li><strong>S1 (Standard):</strong> com autoscaling e slots de staging, ~$56/mês</li>
+          <li><strong>P1v3 (Premium):</strong> alta performance para cargas maiores</li>
+        </ul>
+        <p>Para a maioria dos blogs e APIs pessoais, o plano B1 é suficiente e econômico.</p>
+
+        <h2>Staging Slots: Deploy Seguro</h2>
+        <p>Nos planos Standard e acima, você pode criar Deployment Slots — ambientes separados (staging, homologação) que podem ser trocados com produção com zero downtime. O fluxo recomendado é:</p>
+        <ol>
+          <li>Deploy automático vai para o slot de staging</li>
+          <li>Valide a nova versão no ambiente de staging</li>
+          <li>Execute um "Swap" para promover staging para produção</li>
+          <li>Se algo der errado, faça o swap reverso em segundos</li>
+        </ol>
+
+        <h2>Conclusão</h2>
+        <p>Azure App Service remove a barreira de entrada para hospedar aplicações profissionais na nuvem. Sem servidores para gerenciar, com escalabilidade automática e CI/CD integrado, você vai do código para produção em minutos. É a escolha ideal para startups, projetos pessoais e APIs corporativas que precisam de confiabilidade sem complexidade operacional.</p>
+      </div>
+
+      <div class="artigo-tags-footer">
+        <span class="artigo-chip">azure</span>
+        <span class="artigo-chip">app service</span>
+        <span class="artigo-chip">paas</span>
+        <span class="artigo-chip">deploy</span>
+        <span class="artigo-chip">cloud</span>
+        <span class="artigo-chip">microsoft</span>
+      </div>
+
+      <div class="artigo-nav">
+        <a href="artigo-git-boas-praticas.html" class="artigo-nav-link">← Artigo anterior: Git — Boas Práticas</a>
+        <a href="artigo-azure-table-storage.html" class="artigo-nav-link">Próximo artigo: Azure Table Storage →</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Table Storage: NoSQL Simples e Escalável | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source azure-source"><i class="fab fa-microsoft"></i> Azure</span>
+          <span class="artigo-data">18 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 9 min de leitura</span>
+        </div>
+        <h1>Azure Table Storage: Banco NoSQL Gerenciado para Dados que Crescem</h1>
+        <p class="artigo-subtitulo">Entenda quando e como usar Azure Table Storage para armazenar dados estruturados sem schema rígido, com custo baixo, latência consistente e escala automática.</p>
+      </div>
+
+      <img src="imagens/card4.png" alt="Azure Table Storage banco de dados NoSQL" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>O que é Azure Table Storage?</h2>
+        <p>Azure Table Storage é um serviço de armazenamento NoSQL gerenciado da Microsoft, parte do Azure Storage Account. Ele armazena grandes volumes de dados estruturados sem exigir um schema fixo, tornando-o ideal para cenários onde os dados variam entre entidades ou crescem de forma imprevisível.</p>
+        <p>É utilizado por este próprio blog para armazenar inscrições, comentários e eventos de analytics.</p>
+
+        <h2>Quando usar Table Storage?</h2>
+        <p>Table Storage é a escolha certa quando você precisa de:</p>
+        <ul>
+          <li>Armazenamento simples sem necessidade de queries complexas com JOINs</li>
+          <li>Dados que crescem rapidamente (logs, eventos, telemetria, registros)</li>
+          <li>Schemas flexíveis onde cada linha pode ter campos diferentes</li>
+          <li>Custo reduzido — significativamente mais barato que SQL ou Cosmos DB</li>
+          <li>Latência consistente independente do volume de dados</li>
+          <li>Alta disponibilidade sem configuração</li>
+        </ul>
+
+        <h2>Conceitos Fundamentais</h2>
+        <h3>Storage Account</h3>
+        <p>O ponto de entrada para todos os serviços de armazenamento no Azure. Um Storage Account contém Blobs, Queues, Files e Tables. Você cria um Storage Account e dentro dele cria suas tabelas.</p>
+
+        <h3>Table</h3>
+        <p>Similar a uma tabela em banco relacional, mas sem schema definido. Cada tabela armazena entidades (linhas) que podem ter campos completamente diferentes entre si.</p>
+
+        <h3>Entity (Entidade)</h3>
+        <p>Equivalente a uma linha no banco relacional. Cada entidade é um conjunto de propriedades (chave-valor). Toda entidade tem obrigatoriamente três campos:</p>
+        <ul>
+          <li><strong>PartitionKey:</strong> agrupa entidades relacionadas no mesmo nó de armazenamento</li>
+          <li><strong>RowKey:</strong> identificador único dentro da partição</li>
+          <li><strong>Timestamp:</strong> data/hora da última modificação (gerenciado automaticamente)</li>
+        </ul>
+
+        <h2>PartitionKey e RowKey: A Chave do Desempenho</h2>
+        <p>A escolha inteligente de PartitionKey e RowKey é o mais importante para o desempenho do Table Storage.</p>
+
+        <h3>PartitionKey</h3>
+        <p>Entidades com a mesma PartitionKey ficam no mesmo servidor físico, o que garante queries rápidas. Defina a PartitionKey baseado em como você vai consultar os dados:</p>
+        <ul>
+          <li>Para analytics por mês: use <code>"2026-03"</code> como PartitionKey</li>
+          <li>Para inscrições por domínio: use o domínio do email</li>
+          <li>Para logs por serviço: use o nome do serviço</li>
+        </ul>
+
+        <h3>RowKey</h3>
+        <p>Deve ser único dentro da partição. Geralmente é um ID gerado (UUID), um timestamp ou uma combinação de campos que identifique unicamente a entidade.</p>
+
+        <h2>Operações CRUD com SDK do Node.js</h2>
+        <p>O SDK <code>@azure/data-tables</code> facilita o uso no Node.js:</p>
+        <ul>
+          <li><strong>Criar/Atualizar:</strong> <code>TableClient.upsertEntity(entity, "Replace")</code> — cria se não existe, substitui se existir</li>
+          <li><strong>Ler por chave:</strong> <code>TableClient.getEntity(partitionKey, rowKey)</code> — leitura pontual, mais rápida</li>
+          <li><strong>Listar com filtro:</strong> <code>TableClient.listEntities({ queryOptions: { filter } })</code> — use filtros OData</li>
+          <li><strong>Deletar:</strong> <code>TableClient.deleteEntity(partitionKey, rowKey)</code></li>
+        </ul>
+
+        <h2>Queries com Filtros OData</h2>
+        <p>O Table Storage usa sintaxe OData para filtros. Exemplos práticos:</p>
+        <ul>
+          <li>Por partição: <code>PartitionKey eq '2026-03'</code></li>
+          <li>Por campo: <code>eventType eq 'page_view'</code></li>
+          <li>Combinado: <code>PartitionKey eq '2026-03' and eventType eq 'click'</code></li>
+          <li>Comparação: <code>timestamp ge '2026-03-01T00:00:00Z'</code></li>
+        </ul>
+        <p><strong>Dica crítica:</strong> sempre filtre por PartitionKey. Queries sem PartitionKey fazem scan completo da tabela, o que é lento e custoso.</p>
+
+        <h2>Comparativo: Table Storage vs SQL vs Cosmos DB</h2>
+        <p>Quando escolher cada um:</p>
+        <ul>
+          <li><strong>Table Storage:</strong> dados simples, crescimento rápido, custo muito baixo. Ideal para logs, eventos e dados sem relacionamentos.</li>
+          <li><strong>Azure SQL:</strong> dados relacionais, queries complexas, transações multi-tabela. Use quando você precisa de JOINs e consistência forte.</li>
+          <li><strong>Cosmos DB:</strong> escala global, múltiplos modelos (documento, grafo, coluna), SLA de 99.999%. Use quando Table Storage não é suficiente mas Cosmos DB vale o custo.</li>
+        </ul>
+
+        <h2>Segurança e Acesso</h2>
+        <p>Para conectar ao Table Storage use a Connection String do Storage Account, disponível em "Chaves de acesso" no portal Azure. Nunca coloque essa string no código — armazene como variável de ambiente ou App Setting no App Service.</p>
+        <p>Em ambientes de produção, considere usar Managed Identity para autenticar sem credenciais estáticas.</p>
+
+        <h2>Conclusão</h2>
+        <p>Azure Table Storage é uma ferramenta poderosa quando usada no contexto certo. Para projetos que precisam armazenar grandes volumes de dados simples com custo controlado, ele é imbatível. A chave do sucesso é definir bem as PartitionKeys desde o início, alinhando-as com os padrões de acesso da sua aplicação.</p>
+      </div>
+
+      <div class="artigo-tags-footer">
+        <span class="artigo-chip">azure</span>
+        <span class="artigo-chip">table storage</span>
+        <span class="artigo-chip">nosql</span>
+        <span class="artigo-chip">banco de dados</span>
+        <span class="artigo-chip">cloud</span>
+        <span class="artigo-chip">armazenamento</span>
+      </div>
+
+      <div class="artigo-nav">
+        <a href="artigo-azure-app-service.html" class="artigo-nav-link">← Artigo anterior: Azure App Service</a>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
