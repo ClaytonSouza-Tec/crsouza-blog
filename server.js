@@ -16,6 +16,11 @@ const {
   verifyMailConfiguration,
   sendSubscriptionConfirmationEmail
 } = require("./lib/mail-service");
+const {
+  ensureAnalyticsTable,
+  trackEvent,
+  getMonthlyReport
+} = require("./lib/analytics");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -38,6 +43,15 @@ app.use(express.static(__dirname));
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getPagePathFromReferrer(referrer) {
+  try {
+    const url = new URL(String(referrer || ""));
+    return `${url.pathname || "/"}${url.search || ""}`;
+  } catch {
+    return "/";
+  }
 }
 
 app.get("/unsubscribe", async (req, res) => {
@@ -123,6 +137,24 @@ app.post("/api/subscribe", async (req, res) => {
       updatedAt: now
     });
 
+    await trackEvent(
+      {
+        eventType: "subscribe_submit_success",
+        pagePath: getPagePathFromReferrer(req.headers.referer),
+        targetType: "form",
+        targetId: "subscribeForm",
+        targetLabel: "Inscricao",
+        sessionId: String(req.headers["x-session-id"] || ""),
+        referrer: String(req.headers.referer || ""),
+        source: "server"
+      },
+      {
+        userAgent: String(req.headers["user-agent"] || "")
+      }
+    ).catch((error) => {
+      console.warn("Falha ao registrar analytics de inscricao:", error.message || error);
+    });
+
     const mailResult = await sendSubscriptionConfirmationEmail({
       name,
       email,
@@ -130,10 +162,10 @@ app.post("/api/subscribe", async (req, res) => {
     });
 
     if (!mailResult.enabled) {
-      console.warn("SMTP não configurado. Inscrição registrada sem envio de e-mail.");
+      console.warn("Azure Communication Services Email não configurado. Inscrição registrada sem envio de e-mail.");
       res.status(202).json({
         ok: true,
-        message: "Inscrição registrada. Configure o SMTP no arquivo .env para habilitar o envio de e-mail."
+        message: "Inscrição registrada. Configure AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM para habilitar o envio de e-mail."
       });
       return;
     }
@@ -168,10 +200,10 @@ app.post("/api/subscribe", async (req, res) => {
 });
 
 app.get("/health", (req, res) => {
-  const storageMode = isAzureStorageConfigured() ? "azure-table-storage" : "local-fallback";
+  const storageMode = isAzureStorageConfigured() ? "azure-table-storage" : "not-configured";
   const emailMode = process.env.AZURE_EMAIL_CONNECTION_STRING
     ? "azure-communication-services"
-    : (isMailConfigured() ? "smtp" : "not-configured");
+    : "not-configured";
 
   res.status(200).json({
     ok: true,
@@ -180,6 +212,49 @@ app.get("/health", (req, res) => {
     usingAzureStorage: isAzureStorageConfigured(),
     usingAzureEmail: Boolean(process.env.AZURE_EMAIL_CONNECTION_STRING)
   });
+});
+
+app.post("/api/analytics/events", async (req, res) => {
+  try {
+    const eventType = String(req.body?.eventType || "").trim();
+    if (!eventType) {
+      res.status(400).json({ error: "eventType e obrigatorio." });
+      return;
+    }
+
+    await trackEvent(
+      {
+        eventType,
+        pagePath: req.body?.pagePath,
+        targetType: req.body?.targetType,
+        targetId: req.body?.targetId,
+        targetLabel: req.body?.targetLabel,
+        sessionId: req.body?.sessionId,
+        timestamp: req.body?.timestamp,
+        referrer: req.body?.referrer || req.headers.referer,
+        source: req.body?.source || "web"
+      },
+      {
+        userAgent: String(req.headers["user-agent"] || "")
+      }
+    );
+
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    console.error("Erro ao registrar evento de analytics:", error.message || error);
+    res.status(500).json({ error: "Falha ao registrar evento de analytics." });
+  }
+});
+
+app.get("/api/analytics/reports/monthly", async (req, res) => {
+  try {
+    const month = String(req.query?.month || "").trim();
+    const report = await getMonthlyReport(month);
+    res.status(200).json({ ok: true, report });
+  } catch (error) {
+    console.error("Erro ao gerar relatorio mensal de analytics:", error.message || error);
+    res.status(500).json({ error: "Falha ao gerar relatorio mensal de analytics." });
+  }
 });
 
 app.post("/api/comments", async (req, res) => {
@@ -202,6 +277,24 @@ app.post("/api/comments", async (req, res) => {
       name,
       text: comment,
       createdAt: now
+    });
+
+    await trackEvent(
+      {
+        eventType: "comment_submit_success",
+        pagePath: getPagePathFromReferrer(req.headers.referer),
+        targetType: "form",
+        targetId: "commentForm",
+        targetLabel: "Comentario",
+        sessionId: String(req.headers["x-session-id"] || ""),
+        referrer: String(req.headers.referer || ""),
+        source: "server"
+      },
+      {
+        userAgent: String(req.headers["user-agent"] || "")
+      }
+    ).catch((error) => {
+      console.warn("Falha ao registrar analytics de comentario:", error.message || error);
     });
 
     const allComments = await listComments();
@@ -234,7 +327,6 @@ app.get("/health/email-debug", async (req, res) => {
     
     const azureEmailConnStr = process.env.AZURE_EMAIL_CONNECTION_STRING ? "✓ Configurado" : "✗ Não configurado";
     const mailFrom = process.env.MAIL_FROM ? `✓ ${process.env.MAIL_FROM}` : "✗ Não configurado";
-    const smtpHost = process.env.SMTP_HOST ? "✓ Configurado" : "✗ Não configurado";
     const nodeEnv = process.env.NODE_ENV || "não definido";
     
     res.status(200).json({
@@ -244,10 +336,6 @@ app.get("/health/email-debug", async (req, res) => {
       azure: {
         connectionString: azureEmailConnStr,
         mailFrom: mailFrom
-      },
-      smtp: {
-        host: smtpHost,
-        port: process.env.SMTP_PORT || "não definido"
       }
     });
   } catch (error) {
@@ -278,7 +366,7 @@ app.post("/health/test-email", async (req, res) => {
     if (!result.enabled) {
       return res.status(503).json({
         error: "E-mail não configurado",
-        details: "Configure AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM, ou SMTP_HOST/SMTP_USER/SMTP_PASS"
+        details: "Configure AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM"
       });
     }
     
@@ -307,12 +395,13 @@ if (isMailConfigured()) {
       console.error("Falha ao validar serviço de e-mail:", error.message || error);
     });
 } else {
-  console.warn("Serviço de e-mail não configurado. Defina AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM, ou mantenha SMTP_* para fallback local.");
+  console.warn("Serviço de e-mail não configurado. Defina AZURE_EMAIL_CONNECTION_STRING e MAIL_FROM.");
 }
 
 initializeDataStore()
-  .then(() => {
-    console.log(`Persistência ativa: ${isAzureStorageConfigured() ? "Azure Table Storage" : "SQLite/Markdown local"}`);
+  .then(async () => {
+    await ensureAnalyticsTable();
+    console.log(`Persistência ativa: ${isAzureStorageConfigured() ? "Azure Table Storage" : "Não configurada"}`);
     app.listen(PORT, () => {
       console.log(`Servidor iniciado em http://localhost:${PORT}`);
     });

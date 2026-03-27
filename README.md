@@ -1,204 +1,171 @@
 # CRSouza Blog
 
-Site pessoal com foco em Cloud, DevOps, IA aplicada e conteúdo educacional.
+Blog pessoal com frontend estatico e backend Node.js no Azure, com persistencia em Azure Table Storage e envio de e-mail via Azure Communication Services.
 
-## Status atual da hospedagem
+## Sumario
 
-O projeto deixou de ter GitHub Pages como ambiente principal.
+1. Visao geral
+2. Infraestrutura Azure (atual)
+3. Topologia de comunicacao
+4. Estrutura do repositorio
+5. Variaveis de ambiente
+6. Execucao local
+7. Deploy
+8. Operacao de newsletter
+9. Seguranca e privacidade
 
-O cenário recomendado agora é:
-- Frontend e backend publicados no Azure App Service
-- Comentários e inscrições persistidos no Azure Table Storage
-- E-mails enviados pelo Azure Communication Services Email
+## Visao geral
 
-## Variáveis de ambiente para Azure App Service
+Este projeto roda em modo server-rendered estatico + API:
+- Frontend: paginas HTML/CSS/JS servidas pelo mesmo app Node
+- Backend: API Express para inscricoes, comentarios e unsubscribe
+- Persistencia: Azure Table Storage (tabelas de inscritos e comentarios)
+- E-mail: Azure Communication Services Email (confirmacao e newsletter)
 
-Configure estas variáveis no App Service:
+Nao ha mais fallback de persistencia local (SQLite/Markdown) no fluxo oficial.
+
+## Infraestrutura Azure (atual)
+
+Componentes principais:
+- Azure App Service (Linux, Node.js): hospeda frontend e backend
+- Azure Table Storage: armazena inscritos e comentarios
+- Azure Table Storage (analytics): armazena visitas e cliques por pagina
+- Azure Communication Services Email: envia e-mails transacionais e newsletter
+- Custom Domain no App Service: endpoint publico do site
+
+Recursos logicos usados pela aplicacao:
+- Tabela de inscritos: `Subscribers` (padrao)
+- Tabela de comentarios: `Comments` (padrao)
+- Tabela de analytics: `AnalyticsEvents` (padrao)
+
+## Topologia de comunicacao
+
+Fluxo de runtime:
+1. Usuario acessa o dominio customizado do blog (HTTPS).
+2. Requisicao chega no Azure App Service.
+3. Frontend chama endpoints da API (`/api/subscribe`, `/api/comments`).
+4. API grava e consulta dados no Azure Table Storage.
+5. API envia e-mails pelo Azure Communication Services Email.
+6. Usuario recebe confirmacao por e-mail com link de unsubscribe.
+
+Fluxo de newsletter por atualizacao de conteudo:
+1. Push na branch `main`.
+2. Workflow de deploy publica o app no Azure App Service.
+3. Se o commit for `NEWS UPDATES`, o workflow executa o script de newsletter.
+4. Script le noticias do carrossel em `index.html`, busca inscritos no Table Storage e envia e-mails pelo ACS Email.
+
+## Estrutura do repositorio
+
+Arquivos e pastas principais:
+- `index.html`, `sobre.html`, `dicas.html`, `eventos.html`, `tinho.html`: paginas do site
+- `styles.css`: estilo global
+- `script.js`: logica de interacao no frontend
+- `server.js`: API Express + arquivos estaticos
+- `lib/subscribers.js`: acesso ao Azure Table Storage
+- `lib/mail-service.js`: envio de e-mail via Azure Communication Services
+- `scripts/send-newsletter-on-update.js`: disparo de newsletter
+- `.github/workflows/main_app-crsouza-blog.yml`: build/deploy + gatilho de newsletter
+
+## Variaveis de ambiente
+
+Defina no Azure App Service (Configuration > Application settings):
 
 ```env
 PORT=3000
+NODE_ENV=production
 AZURE_STORAGE_CONNECTION_STRING=
 SUBSCRIBERS_TABLE_NAME=Subscribers
 COMMENTS_TABLE_NAME=Comments
+ANALYTICS_TABLE_NAME=AnalyticsEvents
 AZURE_EMAIL_CONNECTION_STRING=
 MAIL_FROM=
-NODE_ENV=production
+BLOG_URL=https://seu-dominio.com
 ```
 
-Observação:
-- Se `AZURE_STORAGE_CONNECTION_STRING` não estiver definido, o projeto ainda consegue usar SQLite/markdown localmente.
-- Se `AZURE_EMAIL_CONNECTION_STRING` não estiver definido, o projeto ainda aceita fallback SMTP local via `SMTP_*`.
+Notas:
+- Nao publique valores reais de segredo.
+- `BLOG_URL` deve apontar para o dominio publico usado pelos usuarios (idealmente o custom domain).
 
-Este projeto foi estruturado para funcionar em dois modos:
-- Modo estatico (GitHub Pages)
-- Modo completo com backend Node.js (Express + SQLite)
-
-## Visao geral para iniciantes
-
-Pense no projeto em 3 camadas:
-- HTML: estrutura visual das paginas (textos, blocos, links, formularios)
-- CSS: estilo da interface (cores, layout, responsividade)
-- JavaScript: comportamento dinamico (carrossel, busca, comentarios e inscricoes)
-
-Quando voce abre o site no navegador, o HTML monta a pagina, o CSS estiliza e o arquivo `script.js` ativa as funcionalidades interativas.
-
-## Estrutura principal do projeto
-
-- `index.html`: pagina inicial com carrossel, cards, formulario e links
-- `sobre.html`: pagina com biografia, formacao e certificacoes
-- `tinho.html`: pagina do avatar Tinho com video e redes sociais
-- `eventos.html`: agenda e destaque de eventos
-- `dicas.html`: dicas tecnicas e exibicao de comentarios
-- `styles.css`: estilos globais
-- `script.js`: logica front-end
-- `server.js`: backend local para endpoint de inscricao
-- `data/`: banco e arquivo de registro local (modo backend)
-
-## Funcionalidades implementadas
-
-### 1) Navegacao entre paginas
-- Menu principal com links internos entre as paginas do site.
-- Funciona no GitHub Pages por usar caminhos relativos.
-
-### 2) Carrossel na home
-- Avanco automatico a cada 5 segundos.
-- Botoes anterior/proximo e indicadores.
-
-### 3) Busca global
-- Campo "Buscar no blog" filtra conteudo visivel por texto e tags.
-- Funciona em todas as paginas que possuem itens com classe `searchable-item`.
-
-### 4) Comentarios da comunidade
-- Comentarios enviados na home sao armazenados no `localStorage`.
-- Pagina `dicas.html` le esse armazenamento e renderiza os comentarios.
-- Sem backend obrigatorio para comentarios.
-
-### 5) Inscricao de novidades
-- No modo backend local: envia para `POST /api/subscribe` e grava no SQLite.
-- No GitHub Pages: salva localmente no navegador (fallback automatico) para manter a funcionalidade ativa mesmo sem API.
-
-### 6) Video de apresentacao do Tinho
-- Video configurado para iniciar automaticamente (`autoplay`, `muted`, `playsinline`).
-
-## Compatibilidade GitHub Pages
-
-O GitHub Pages hospeda arquivos estaticos. Portanto:
-- HTML/CSS/JS funcionam normalmente.
-- Rotas de API (como `/api/subscribe`) nao existem no Pages.
-
-Para resolver isso, o front-end ja foi preparado com fallback local para inscricoes.
-
-## Como executar localmente (modo estatico)
-
-Basta abrir `index.html` no navegador.
-
-Opcionalmente, use uma extensao como Live Server no VS Code para recarregamento automatico.
-
-## Como executar localmente (modo backend completo)
+## Execucao local
 
 Pre-requisitos:
-- Node.js instalado
+- Node.js 20+
 
 Passos:
-1. Instale dependencias:
 
 ```bash
 npm install
+npm start
 ```
 
-2. Crie o arquivo `.env` com base no `.env.example` e preencha a configuracao SMTP.
+Aplicacao local:
+- `http://localhost:3000`
 
-Exemplo para Brevo SMTP:
+Para executar localmente com API ativa, configure um `.env` com as variaveis acima.
 
-```env
-PORT=3000
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=seu-login-smtp-brevo
-SMTP_PASS=sua-chave-smtp-brevo
-MAIL_FROM=CRSouza Blog <seu-remetente-verificado@seudominio.com>
-MAIL_REPLY_TO=seu-remetente-verificado@seudominio.com
-MAIL_NOTIFY_TO=
-BLOG_URL=http://localhost:3000/index.html
-```
+## Deploy
 
-Observacoes sobre o SMTP:
-- `MAIL_FROM` deve usar um remetente valido e, idealmente, verificado no Brevo.
-- `MAIL_NOTIFY_TO` e opcional. Se preenchido, recebe aviso a cada nova inscricao.
-- `BLOG_URL` define o link usado no e-mail de noticias para "Ler no Blog".
-- O backend envia um e-mail de confirmacao para o usuario inscrito.
+Deploy automatizado via GitHub Actions:
+- Workflow: `.github/workflows/main_app-crsouza-blog.yml`
+- Trigger: push para `main`
+- Etapas: install, build/test (se existirem), deploy no App Service
 
-## Envio automatico de noticias
+## Operacao de newsletter
 
-O projeto agora envia e-mails em 2 cenarios:
-- Quando o visitante se inscreve no blog pelo formulario.
-- Quando as 4 noticias do carrossel da home forem atualizadas e voce fizer um commit com a mensagem exata `NEWS UPDATES`.
-
-Para o disparo automatico no commit, o envio oficial acontece no GitHub Actions durante o push para `main`, usando as configuracoes do Azure Web App.
-
-O hook local em `.githooks/post-commit` fica desativado por padrao para evitar disparo acidental com configuracoes locais de SMTP. Ele so roda se a variavel `ENABLE_LOCAL_NEWSLETTER_HOOK=true` estiver definida no ambiente local.
-
-Ative localmente com:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-Regras do envio de noticias:
-- O workflow roda apenas quando o commit mais recente se chama `NEWS UPDATES`.
-- Ele lê as 4 noticias do carrossel da home e envia para todos os inscritos.
-- O assunto do e-mail e `Novas noticias no CRSouza Blog`.
-
-Para testar manualmente sem depender de commit:
+Disparo manual local:
 
 ```bash
 npm run send:news
 ```
 
-3. Inicie o servidor:
+Regras de envio automatico no CI:
+- O script de newsletter roda quando o ultimo commit tem mensagem exata `NEWS UPDATES`.
+- O script usa os app settings do App Service para conexao no Table Storage e servico de e-mail.
+
+## Analytics para relatorio mensal
+
+Eventos medidos automaticamente:
+- `page_view`: visita por pagina
+- `click`: clique em links/botoes
+- `comment_submit_attempt` e `comment_submit_success`
+- `subscribe_submit_attempt` e `subscribe_submit_success`
+
+Endpoints:
+- Ingestao de eventos: `POST /api/analytics/events`
+- Relatorio mensal: `GET /api/analytics/reports/monthly?month=YYYY-MM`
+
+Exemplo de consulta do relatorio mensal:
 
 ```bash
-npm start
+curl "http://localhost:3000/api/analytics/reports/monthly?month=2026-03"
 ```
 
-4. Abra no navegador:
+Geracao automatica de relatorio mensal em Markdown:
 
-- `http://localhost:3000`
+```bash
+npm run report:monthly -- --month=2026-03
+```
 
-## Publicacao no GitHub Pages
+Campos principais no relatorio:
+- `totalEvents`
+- `pageViews`
+- `uniqueSessions`
+- `byPageViews`
+- `byEventType`
+- `topClicks`
+- `conversions.subscribeSubmitSuccess`
+- `conversions.commentSubmitSuccess`
 
-1. Suba o projeto para o repositorio GitHub.
-2. No GitHub, abra:
-   - Settings
-   - Pages
-3. Em Source, selecione:
-   - Deploy from a branch
-   - Branch: `main`
-   - Folder: `/ (root)`
-4. Salve e aguarde a URL publica ser gerada.
+## Seguranca e privacidade
 
-## Observacoes importantes
+Este README e publico e nao contem:
+- strings de conexao
+- chaves
+- IDs de tenant/subscription
+- e-mails internos de operacao
 
-- Comentarios e inscricoes locais (fallback) ficam salvos no navegador de quem acessa.
-- Isso significa que os dados nao sao compartilhados entre usuarios no modo estatico.
-- Para centralizar dados entre todos os visitantes, use backend (ex.: `server.js`) hospedado separadamente.
-
-## Tecnologias utilizadas
-
-- HTML5
-- CSS3
-- JavaScript (Vanilla)
-- Node.js
-- Express
-- SQLite
-
-## Resumo da validacao realizada
-
-Foi feita uma revisao tecnica do projeto para uso em GitHub e GitHub Pages:
-- Estrutura de navegacao validada
-- Referencias locais (`href`/`src`) validadas
-- Fluxos principais de interface revisados (carrossel, busca, comentarios, video)
-- Fluxo de inscricao adaptado para funcionamento tambem em hospedagem estatica
-
-Projeto pronto para publicacao no GitHub Pages e uso local com Node.js.
+Boas praticas recomendadas:
+- armazenar segredos somente em GitHub Secrets e App Settings
+- habilitar HTTPS only no App Service
+- revisar CORS conforme dominio oficial
+- auditar periodicamente permissoes de acesso aos recursos Azure

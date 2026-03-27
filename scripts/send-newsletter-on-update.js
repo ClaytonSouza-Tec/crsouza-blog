@@ -8,14 +8,20 @@ require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const {
   initializeDataStore,
-  listSubscribers,
-  DATA_DIR
+  listSubscribers
 } = require("../lib/subscribers");
 const { isMailConfigured, sendNewsUpdateEmail } = require("../lib/mail-service");
 
 const REPO_ROOT = path.join(__dirname, "..");
 const HOME_PAGE_PATH = path.join(REPO_ROOT, "index.html");
-const LAST_SENT_COMMIT_PATH = path.join(DATA_DIR, "last-newsletter-commit.txt");
+const CACHE_DIR = path.join(REPO_ROOT, ".cache");
+const LAST_SENT_COMMIT_PATH = path.join(CACHE_DIR, "last-newsletter-commit.txt");
+
+function ensureCacheDir() {
+  if (!fs.existsSync(CACHE_DIR)) {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+  }
+}
 
 function runGitCommand(args) {
   return execFileSync("git", args, {
@@ -117,6 +123,7 @@ function shouldSendForCommit(forceMode) {
 }
 
 async function main() {
+  ensureCacheDir();
   const forceMode = process.argv.includes("--force");
   const onlyEmail = getOnlyEmailArgument();
   const commitDecision = shouldSendForCommit(forceMode);

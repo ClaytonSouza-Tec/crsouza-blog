@@ -1,8 +1,8 @@
-const SUBSCRIBERS_KEY = "crsouzaBlogSubscribers";
 const SUBSCRIBE_API_ENDPOINT = "/api/subscribe";
 const COMMENTS_API_ENDPOINT = "/api/comments";
+const ANALYTICS_API_ENDPOINT = "/api/analytics/events";
 const COMMENT_FLASH_MESSAGE_KEY = "crsouzaBlogCommentFlashMessage";
-const COMMENTS_MARKDOWN_PATH = "data/comentarios.md";
+const ANALYTICS_SESSION_KEY = "crsouzaBlogAnalyticsSessionId";
 
 function getApiBaseUrl() {
   const { protocol, hostname, port } = window.location;
@@ -22,33 +22,73 @@ function buildApiUrl(path) {
   return `${getApiBaseUrl()}${path}`;
 }
 
-function parseCommentsMarkdown(markdown) {
-  return String(markdown || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("|"))
-    .filter((line) => !/^\|\s*-/.test(line))
-    .map((line) => line.split("|").map((part) => part.trim()).filter(Boolean))
-    .filter((parts) => parts.length >= 4)
-    .filter((parts) => !(parts[0] === "Nome" && parts[1] === "Data"))
-    .map((parts) => ({
-      name: parts[0],
-      date: parts[1],
-      time: parts[2],
-      text: parts.slice(3).join(" | ")
-    }))
-    .filter((comment) => comment.name && comment.text)
-    .reverse();
-}
-
-async function loadCommentsFromMarkdown() {
-  const response = await fetch(COMMENTS_MARKDOWN_PATH, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error("Falha ao carregar comentarios.md");
+function getAnalyticsSessionId() {
+  const existing = sessionStorage.getItem(ANALYTICS_SESSION_KEY);
+  if (existing) {
+    return existing;
   }
 
-  const markdown = await response.text();
-  return parseCommentsMarkdown(markdown);
+  const generated = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  sessionStorage.setItem(ANALYTICS_SESSION_KEY, generated);
+  return generated;
+}
+
+function sendAnalyticsEvent(payload) {
+  const body = JSON.stringify({
+    ...payload,
+    pagePath: payload.pagePath || `${window.location.pathname}${window.location.search}`,
+    timestamp: payload.timestamp || new Date().toISOString(),
+    referrer: payload.referrer || document.referrer || "",
+    source: "web",
+    sessionId: payload.sessionId || getAnalyticsSessionId()
+  });
+  const url = buildApiUrl(ANALYTICS_API_ENDPOINT);
+
+  if (navigator.sendBeacon) {
+    const blob = new Blob([body], { type: "application/json" });
+    navigator.sendBeacon(url, blob);
+    return;
+  }
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true
+  }).catch(() => {
+    // Analytics must not break UX.
+  });
+}
+
+function getTrackLabel(element) {
+  const explicit = String(element.getAttribute("data-track-label") || "").trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const text = String(element.textContent || "").replace(/\s+/g, " ").trim();
+  return text.slice(0, 80) || String(element.id || element.name || element.tagName || "").trim();
+}
+
+function initAnalytics() {
+  sendAnalyticsEvent({ eventType: "page_view" });
+
+  document.addEventListener("click", (event) => {
+    const target = event.target instanceof Element
+      ? event.target.closest("a,button,[data-track],input[type='submit']")
+      : null;
+
+    if (!target) {
+      return;
+    }
+
+    sendAnalyticsEvent({
+      eventType: "click",
+      targetType: target.tagName.toLowerCase(),
+      targetId: target.id || target.getAttribute("name") || "",
+      targetLabel: getTrackLabel(target)
+    });
+  }, true);
 }
 
 function setCommentFlashMessage(text) {
@@ -87,23 +127,6 @@ function formatDateTime(isoDate) {
     dateStyle: "short",
     timeStyle: "short"
   }).format(date);
-}
-
-function getSubscribers() {
-  try {
-    const raw = localStorage.getItem(SUBSCRIBERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveSubscriber(subscriber) {
-  const list = getSubscribers();
-  const email = String(subscriber.email || "").toLowerCase();
-  const next = list.filter((item) => String(item.email || "").toLowerCase() !== email);
-  next.unshift(subscriber);
-  localStorage.setItem(SUBSCRIBERS_KEY, JSON.stringify(next));
 }
 
 function isStaticHosting() {
@@ -186,6 +209,12 @@ function initCommentForm() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    sendAnalyticsEvent({
+      eventType: "comment_submit_attempt",
+      targetType: "form",
+      targetId: "commentForm",
+      targetLabel: "Comentario"
+    });
 
     const formData = new FormData(form);
     const name = String(formData.get("name") || "").trim();
@@ -217,7 +246,10 @@ function initCommentForm() {
     try {
       const response = await fetch(buildApiUrl(COMMENTS_API_ENDPOINT), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": getAnalyticsSessionId()
+        },
         body: JSON.stringify({ name, comment: commentText })
       });
 
@@ -229,7 +261,7 @@ function initCommentForm() {
         throw new Error(data?.error || "Falha ao enviar comentário.");
       }
 
-      // Sucesso: comentário salvo no comentarios.md via API
+      // Sucesso: comentário salvo via API
       const successMessage = data?.message || "Comentário enviado com sucesso!";
       setCommentFlashMessage(successMessage);
       if (message) message.textContent = successMessage;
@@ -255,6 +287,13 @@ function initSubscription() {
   const message = document.getElementById("formMessage");
 
   subscribeButton.addEventListener("click", async () => {
+    sendAnalyticsEvent({
+      eventType: "subscribe_submit_attempt",
+      targetType: "button",
+      targetId: "subscribeButton",
+      targetLabel: "Inscricao"
+    });
+
     const name = String(nameInput?.value || "").trim();
     const email = String(emailInput?.value || "").trim();
 
@@ -296,16 +335,13 @@ function initSubscription() {
         response = await fetch(buildApiUrl(SUBSCRIBE_API_ENDPOINT), {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-session-id": getAnalyticsSessionId()
           },
           body: JSON.stringify({ name, email })
         });
       } catch {
-        saveSubscriber({ name, email, createdAt: new Date().toISOString() });
-        if (message) {
-          message.textContent = "API indisponível no momento. Inscrição registrada localmente neste navegador.";
-        }
-        return;
+        throw new Error("API indisponível no momento. Tente novamente em instantes.");
       }
 
       let payload = null;
@@ -353,12 +389,8 @@ async function loadAndRenderComments(list) {
     try { data = await response.json(); } catch { data = null; }
     comments = data?.comments || [];
   } catch {
-    try {
-      comments = await loadCommentsFromMarkdown();
-    } catch {
-      list.innerHTML = '<p class="empty-message">Não foi possível carregar comentários no momento.</p>';
-      return;
-    }
+    list.innerHTML = '<p class="empty-message">Não foi possível carregar comentários no momento.</p>';
+    return;
   }
 
   if (!comments.length) {
@@ -409,6 +441,7 @@ function initSearch() {
 }
 
 function init() {
+  initAnalytics();
   initCarousel();
   initCommentForm();
   initSubscription();
