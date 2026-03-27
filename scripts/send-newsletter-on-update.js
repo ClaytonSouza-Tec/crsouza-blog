@@ -71,7 +71,7 @@ function shouldSendForCommit(forceMode) {
   }
 
   const commitMessage = runGitCommand(["log", "-1", "--pretty=%s"]);
-  if (commitMessage !== "Update News") {
+  if (commitMessage !== "NEWS UPDATES") {
     return {
       shouldSend: false,
       reason: `Commit ignorado: '${commitMessage}'.`
@@ -79,16 +79,6 @@ function shouldSendForCommit(forceMode) {
   }
 
   const commitHash = runGitCommand(["rev-parse", "HEAD"]);
-  const changedFiles = runGitCommand(["diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"])
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  if (!changedFiles.includes("index.html")) {
-    return {
-      shouldSend: false,
-      reason: "Commit Update News sem alteração em index.html."
-    };
-  }
 
   if (fs.existsSync(LAST_SENT_COMMIT_PATH)) {
     const lastSentCommit = fs.readFileSync(LAST_SENT_COMMIT_PATH, "utf8").trim();
@@ -104,7 +94,7 @@ function shouldSendForCommit(forceMode) {
   return {
     shouldSend: true,
     commitHash,
-    reason: "Commit Update News detectado."
+    reason: "Commit NEWS UPDATES detectado."
   };
 }
 

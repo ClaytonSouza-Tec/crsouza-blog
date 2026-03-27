@@ -62,4 +62,21 @@ jobs:
           app-name: 'app-crsouza-blog'
           slot-name: 'Production'
           package: .
+
+      - name: Load App Settings For Newsletter
+        if: github.event_name == 'push' && github.event.head_commit.message == 'NEWS UPDATES'
+        run: |
+          az webapp config appsettings list \
+            --name app-crsouza-blog \
+            --resource-group rg-crsouza-blog \
+            --query "[?name=='AZURE_STORAGE_CONNECTION_STRING' || name=='COMMENTS_TABLE_NAME' || name=='SUBSCRIBERS_TABLE_NAME' || name=='AZURE_EMAIL_CONNECTION_STRING' || name=='MAIL_FROM' || name=='NODE_ENV'].[name,value]" \
+            --output tsv > appsettings.tsv
+
+          while IFS=$'\t' read -r name value; do
+            echo "$name=$value" >> "$GITHUB_ENV"
+          done < appsettings.tsv
+
+      - name: Send Newsletter For NEWS UPDATES
+        if: github.event_name == 'push' && github.event.head_commit.message == 'NEWS UPDATES'
+        run: node scripts/send-newsletter-on-update.js
           
