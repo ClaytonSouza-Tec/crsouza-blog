@@ -61,6 +61,24 @@ function getOnlyEmailArgument() {
   return argument.split("=").slice(1).join("=").trim().toLowerCase();
 }
 
+function getCommitMessage() {
+  const envCommitMessage = String(process.env.NEWSLETTER_COMMIT_MESSAGE || "").trim();
+  if (envCommitMessage) {
+    return envCommitMessage;
+  }
+
+  return runGitCommand(["log", "-1", "--pretty=%s"]);
+}
+
+function getCommitHash() {
+  const envCommitHash = String(process.env.NEWSLETTER_COMMIT_HASH || "").trim();
+  if (envCommitHash) {
+    return envCommitHash;
+  }
+
+  return runGitCommand(["rev-parse", "HEAD"]);
+}
+
 function shouldSendForCommit(forceMode) {
   if (forceMode) {
     return {
@@ -70,7 +88,7 @@ function shouldSendForCommit(forceMode) {
     };
   }
 
-  const commitMessage = runGitCommand(["log", "-1", "--pretty=%s"]);
+  const commitMessage = getCommitMessage();
   if (commitMessage !== "NEWS UPDATES") {
     return {
       shouldSend: false,
@@ -78,7 +96,7 @@ function shouldSendForCommit(forceMode) {
     };
   }
 
-  const commitHash = runGitCommand(["rev-parse", "HEAD"]);
+  const commitHash = getCommitHash();
 
   if (fs.existsSync(LAST_SENT_COMMIT_PATH)) {
     const lastSentCommit = fs.readFileSync(LAST_SENT_COMMIT_PATH, "utf8").trim();
