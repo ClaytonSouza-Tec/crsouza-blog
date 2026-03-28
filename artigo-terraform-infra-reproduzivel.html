@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terraform para infraestrutura reproduzível | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="dicas.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar para Dicas</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source dicas-source"><i class="fas fa-lightbulb"></i> Dicas</span>
+          <span class="artigo-data">28 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 6 min de leitura</span>
+        </div>
+        <h1>Terraform para infraestrutura reproduzível</h1>
+        <p class="artigo-subtitulo">Como organizar código de infraestrutura para reduzir riscos, ganhar previsibilidade e escalar mudanças com segurança.</p>
+      </div>
+
+      <img src="imagens/card3.png" alt="Infraestrutura como código com Terraform" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Comece pelos módulos pequenos</h2>
+        <p>Um erro comum em Terraform é criar um único arquivo enorme. Quando tudo está junto, qualquer alteração vira um risco. Dividir por módulos deixa seu projeto mais previsível e mais fácil de manter.</p>
+        <p>Uma estrutura simples costuma funcionar bem:</p>
+        <ul>
+          <li><strong>módulo de rede</strong>: VNet, subnets, NSG</li>
+          <li><strong>módulo de computação</strong>: VMs, App Service, Functions</li>
+          <li><strong>módulo de dados</strong>: Storage, SQL, Key Vault</li>
+        </ul>
+
+        <h2>Padronize variáveis e nomes</h2>
+        <p>Nomenclatura consistente evita confusão e facilita troubleshooting. Defina padrões para recursos, tags e variáveis de ambiente.</p>
+        <ul>
+          <li>Use prefixos por ambiente: <code>dev-</code>, <code>hml-</code>, <code>prd-</code></li>
+          <li>Centralize variáveis em arquivos <code>.tfvars</code></li>
+          <li>Documente entradas obrigatórias no README do módulo</li>
+        </ul>
+
+        <h2>Sempre valide antes do apply</h2>
+        <p>Pipeline saudável de Terraform:</p>
+        <ol>
+          <li><code>terraform fmt</code> para padronizar código</li>
+          <li><code>terraform validate</code> para validar sintaxe</li>
+          <li><code>terraform plan</code> para revisar mudanças</li>
+          <li><code>terraform apply</code> apenas após aprovação</li>
+        </ol>
+
+        <h2>Use estado remoto e lock</h2>
+        <p>Trabalhar com state local em time é receita para conflito. Prefira backend remoto (como Azure Storage) com lock para impedir execução concorrente.</p>
+
+        <h2>Conclusão</h2>
+        <p>Infraestrutura reproduzível não é só escrever código. É ter padrões claros, validação contínua e execução segura. Com Terraform bem organizado, o time entrega mais rápido e com menos incidentes.</p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

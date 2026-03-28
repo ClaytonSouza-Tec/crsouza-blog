@@ -379,9 +379,7 @@ async function seedNews() {
     try {
       const response = await fetch(`${baseUrl}/api/news`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: news.id,
           title: news.title,

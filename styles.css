@@ -153,6 +153,79 @@ nav a.active {
   background: #000000;
 }
 
+.home-tags-wrap {
+  position: absolute;
+  right: -132px;
+  top: 0.05rem;
+  width: 122px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.6rem;
+}
+
+.home-tags-wrap h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.home-tags-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.home-tag {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--accent-hover);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.2rem;
+  text-decoration: none;
+}
+
+.home-tag:hover {
+  border-color: var(--accent);
+  color: #ffffff;
+  background: var(--accent);
+}
+
+.timeline-highlight {
+  background: #ffe45c;
+  color: #1a1d22;
+  padding: 0 0.15em;
+  border-radius: 4px;
+}
+
+.timeline-empty {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+}
+
+.timeline-empty-state {
+  margin-top: 0.2rem;
+}
+
+.timeline-reset-link {
+  display: inline-block;
+  margin-top: 0.45rem;
+  color: #ffe45c;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.timeline-reset-link:hover {
+  text-decoration: underline;
+}
+
 .carousel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1062,6 +1135,84 @@ nav a.active {
   color: #1a1d22;
 }
 
+.timeline-section {
+  margin-top: 1.2rem;
+}
+
+.timeline-year-label {
+  margin: 0 0 1rem;
+  color: #d7dce7;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.timeline-list {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+}
+
+.timeline-list::before {
+  content: "";
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  left: 99px;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.timeline-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 72px 24px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.timeline-entry-date {
+  margin: 0;
+  padding-top: 0.65rem;
+  color: #d7dce7;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.timeline-entry-marker {
+  position: relative;
+  justify-self: center;
+  width: 14px;
+  height: 14px;
+  margin-top: 0.85rem;
+  border-radius: 50%;
+  background: #cfd4dc;
+  border: 3px solid #6d7482;
+  z-index: 1;
+}
+
+.timeline-card-content {
+  border: 1px solid #dde1e8;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: none;
+  padding: 1rem 1.2rem;
+}
+
+.timeline-card-link {
+  color: #1a1d22;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.timeline-card-link:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
 .empty-message {
   color: var(--muted);
   margin: 0;
@@ -1236,6 +1387,12 @@ nav a.active {
   background: rgba(0, 120, 215, 0.15);
   color: #2a8be2;
   border: 1px solid rgba(0, 120, 215, 0.4);
+}
+
+.dicas-source {
+  background: rgba(255, 176, 0, 0.14);
+  color: #ffca5f;
+  border: 1px solid rgba(255, 176, 0, 0.35);
 }
 
 .artigo-data,
@@ -1557,6 +1714,20 @@ nav a.active {
     margin: 0 0 0.9rem;
   }
 
+  .home-tags-wrap {
+    position: static;
+    width: 100%;
+    margin: 0 0 0.9rem;
+  }
+
+  .home-tags-wrap h3 {
+    font-size: 1rem;
+  }
+
+  .home-tag {
+    font-size: 0.8rem;
+  }
+
   .carousel-slide {
     grid-template-columns: 1fr;
     height: auto;
@@ -1593,6 +1764,16 @@ nav a.active {
   margin: 0 0 1.5rem;
   font-size: 2rem;
   color: var(--text);
+}
+
+.timeline-year {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  padding-left: 15px;
+  opacity: 0.7;
+  letter-spacing: 0.05em;
 }
 
 .timeline-container {
@@ -1965,6 +2146,31 @@ nav a.active {
   .timeline-main h2 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
+  }
+
+  .timeline-card-link {
+    font-size: 1rem;
+  }
+
+  .timeline-year-label {
+    font-size: 1.5rem;
+  }
+
+  .timeline-list::before {
+    left: 82px;
+  }
+
+  .timeline-entry {
+    grid-template-columns: 60px 20px minmax(0, 1fr);
+    gap: 0.8rem;
+  }
+
+  .timeline-entry-date {
+    font-size: 0.85rem;
+  }
+
+  .timeline-card-content {
+    padding: 0.95rem 1rem;
   }
 
   .timeline-sidebar {

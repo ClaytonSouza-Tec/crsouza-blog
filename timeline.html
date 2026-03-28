@@ -31,45 +31,69 @@
       </div>
     </header>
 
-    <main class="container timeline-layout">
-      <section class="timeline-main">
-        <h2>Timeline</h2>
-        <div class="timeline-container" id="timelineContainer">
-          <!-- Notícias carregadas dinamicamente via JavaScript -->
-          <div class="timeline-loading">
-            <p>Carregando notícias...</p>
-          </div>
+    <main class="container">
+      <section class="comments-section comments-section-light timeline-section">
+        <h3>Timeline</h3>
+        <p class="timeline-year-label">2026</p>
+        <div class="comments-list timeline-list">
+          <article class="timeline-entry searchable-item" data-tags="terraform infraestrutura codigo iac">
+            <p class="timeline-entry-date">28 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-terraform-infra-reproduzivel.html" class="timeline-card-link">Terraform para infraestrutura reproduzível</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="python automacao produtividade scripts">
+            <p class="timeline-entry-date">27 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-python-automacao-produtividade.html" class="timeline-card-link">Python para automação e produtividade</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="github devops colaboracao pull request branches">
+            <p class="timeline-entry-date">26 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-github-fluxo-colaboracao.html" class="timeline-card-link">GitHub com fluxo limpo de colaboração</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="github actions ci cd automacao devops">
+            <p class="timeline-entry-date">25 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-github-actions.html" class="timeline-card-link">GitHub Actions: Automação de CI/CD</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="git github branches commits pull request boas praticas">
+            <p class="timeline-entry-date">20 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-git-boas-praticas.html" class="timeline-card-link">Git: Boas Práticas de Versionamento</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="azure app service paas deploy cloud microsoft">
+            <p class="timeline-entry-date">18 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-azure-app-service.html" class="timeline-card-link">Azure App Service: Deploy Sem Complexidade</a>
+            </div>
+          </article>
+
+          <article class="timeline-entry searchable-item" data-tags="azure table storage nosql banco dados cloud armazenamento">
+            <p class="timeline-entry-date">15 Mar</p>
+            <div class="timeline-entry-marker" aria-hidden="true"></div>
+            <div class="timeline-card-content">
+              <a href="artigo-azure-table-storage.html" class="timeline-card-link">Azure Table Storage: NoSQL Simples e Escalável</a>
+            </div>
+          </article>
         </div>
       </section>
-
-      <aside class="timeline-sidebar">
-        <section class="sidebar-section recent-updates">
-          <h3>Atualizados recentemente</h3>
-          <ul id="recentUpdatesList" class="updates-list">
-            <!-- Itens carregados dinamicamente -->
-            <li class="loading">Carregando...</li>
-          </ul>
-        </section>
-
-        <section class="sidebar-section tags-cloud">
-          <h3>Tags</h3>
-          <div id="tagsList" class="tags-list">
-            <!-- Tags carregadas dinamicamente -->
-            <span class="tag loading">Carregando...</span>
-          </div>
-        </section>
-      </aside>
     </main>
-
-    <!-- Modal para exibir notícia completa -->
-    <div id="newsModal" class="news-modal">
-      <div class="modal-content">
-        <button class="modal-close" aria-label="Fechar">&times;</button>
-        <div id="modalBody">
-          <!-- Conteúdo da notícia será inserido aqui -->
-        </div>
-      </div>
-    </div>
 
     <footer class="site-footer">
       <div class="container footer-icons">
@@ -86,181 +110,64 @@
 
     <script src="script.js"></script>
     <script>
-      // Carrega notícias da API e popula a timeline
-      async function loadTimeline() {
-        try {
-          const response = await fetch(buildApiUrl("/api/news"));
-          if (!response.ok) throw new Error("Erro ao carregar notícias");
-          
-          const news = await response.json();
-          renderTimeline(news);
-          renderRecentUpdates(news);
-          renderTags(news);
-        } catch (error) {
-          console.error("Erro na timeline:", error);
-          document.querySelector(".timeline-loading").innerHTML = 
-            "<p style='color: var(--muted);'>Erro ao carregar notícias</p>";
-        }
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       }
 
-      function renderTimeline(news) {
-        const container = document.getElementById("timelineContainer");
-        container.innerHTML = "";
-
-        if (news.length === 0) {
-          container.innerHTML = "<p>Nenhuma notícia disponível</p>";
-          return;
-        }
-
-        news.forEach((item) => {
-          const date = new Date(item.date);
-          const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", 
-                         "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-          const dateStr = `${String(date.getDate()).padStart(2, "0")} ${months[date.getMonth()]}`;
-
-          const article = document.createElement("article");
-          article.className = "timeline-item";
-
-          const titleEl = item.url
-            ? `<a class="news-link" href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>`
-            : `<button class="news-link" data-news-id="${item.id}">${item.title}</button>`;
-
-          const readMoreEl = item.url
-            ? `<a class="read-more-btn" href="${item.url}" target="_blank" rel="noopener noreferrer">Ler mais →</a>`
-            : `<button class="read-more-btn" data-news-id="${item.id}">Ler mais →</button>`;
-
-          article.innerHTML = `
-            <div class="timeline-date">${dateStr}</div>
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <h3>${titleEl}</h3>
-              <p class="timeline-meta">${item.source || "Blog"}</p>
-              <p class="timeline-excerpt">${item.excerpt || item.content.substring(0, 150)}...</p>
-              ${readMoreEl}
-            </div>
-          `;
-
-          container.appendChild(article);
-        });
-
-        // Adiciona listeners apenas nos botões que abrem modal (sem url)
-        document.querySelectorAll(".news-link[data-news-id], .read-more-btn[data-news-id]").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const newsId = btn.getAttribute("data-news-id");
-            showNewsModal(newsId, news);
-          });
-        });
+      function highlightTerm(text, term) {
+        if (!term) return text;
+        const safeTerm = escapeRegExp(term);
+        const regex = new RegExp(`(${safeTerm})`, "ig");
+        return text.replace(regex, '<mark class="timeline-highlight">$1</mark>');
       }
 
-      function renderRecentUpdates(news) {
-        const list = document.getElementById("recentUpdatesList");
-        list.innerHTML = "";
+      function applyTimelineTagFilter() {
+        const params = new URLSearchParams(window.location.search);
+        const tag = (params.get("tag") || "").trim();
+        if (!tag) return;
 
-        news.slice(0, 5).forEach((item) => {
-          const date = new Date(item.date);
-          const dateStr = date.toLocaleDateString("pt-BR");
-          
-          const li = document.createElement("li");
-          if (item.url) {
-            li.innerHTML = `
-              <a class="recent-link" href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-              <small>${dateStr}</small>
-            `;
-          } else {
-            li.innerHTML = `
-              <button class="recent-link" data-news-id="${item.id}">${item.title}</button>
-              <small>${dateStr}</small>
-            `;
-            li.querySelector(".recent-link").addEventListener("click", () => {
-              showNewsModal(item.id, news);
-            });
+        const entries = Array.from(document.querySelectorAll(".timeline-entry"));
+        let visibleCount = 0;
+
+        entries.forEach((entry) => {
+          const link = entry.querySelector(".timeline-card-link");
+          const originalTitle = link.getAttribute("data-original-title") || link.textContent.trim();
+          link.setAttribute("data-original-title", originalTitle);
+
+          const titleMatch = originalTitle.toLowerCase().includes(tag.toLowerCase());
+          const tagMatch = (entry.getAttribute("data-tags") || "").toLowerCase().includes(tag.toLowerCase());
+          const shouldShow = titleMatch || tagMatch;
+
+          if (!shouldShow) {
+            entry.style.display = "none";
+            return;
           }
-          list.appendChild(li);
-        });
-      }
 
-      function renderTags(news) {
-        const tagsContainer = document.getElementById("tagsList");
-        tagsContainer.innerHTML = "";
-
-        const tagsSet = new Set();
-        news.forEach((item) => {
-          if (item.tags) {
-            item.tags.split(",").forEach((tag) => {
-              tagsSet.add(tag.trim());
-            });
-          }
+          entry.style.display = "grid";
+          visibleCount += 1;
+          link.innerHTML = titleMatch ? highlightTerm(originalTitle, tag) : originalTitle;
         });
 
-        Array.from(tagsSet).sort().forEach((tag) => {
-          const span = document.createElement("span");
-          span.className = "tag";
-          span.textContent = tag;
-          span.role = "button";
-          span.tabindex = 0;
-          span.addEventListener("click", () => {
-            // Filtrar por tag quando clicado
-            filterByTag(tag, news);
-          });
-          tagsContainer.appendChild(span);
-        });
-      }
-
-      function filterByTag(tag, news) {
-        const filtered = news.filter((item) => 
-          item.tags && item.tags.toLowerCase().includes(tag.toLowerCase())
-        );
-        renderTimeline(filtered);
-      }
-
-      function showNewsModal(newsId, news) {
-        const newsItem = news.find((item) => item.id === newsId);
-        if (!newsItem) return;
-
-        const modal = document.getElementById("newsModal");
-        const modalBody = document.getElementById("modalBody");
-
-        const date = new Date(newsItem.date);
-        const dateStr = date.toLocaleDateString("pt-BR");
-
-        modalBody.innerHTML = `
-          <article class="news-detail">
-            <h2>${newsItem.title}</h2>
-            <p class="news-meta">
-              <time datetime="${newsItem.date}">${dateStr}</time> · 
-              ${newsItem.source || "Blog"}
-            </p>
-            ${newsItem.image ? `<img src="${newsItem.image}" alt="${newsItem.title}" class="news-image" />` : ""}
-            <div class="news-full-content">
-              ${newsItem.content}
-            </div>
-            ${newsItem.tags ? `
-              <div class="news-tags">
-                ${newsItem.tags.split(",").map((tag) => 
-                  `<span class="tag">${tag.trim()}</span>`
-                ).join("")}
-              </div>
-            ` : ""}
-          </article>
-        `;
-
-        modal.classList.add("active");
-        sendAnalyticsEvent({
-          eventType: "news_view",
-          newsId: newsId,
-          newsTitle: newsItem.title
-        });
-      }
-
-      // Fechar modal
-      document.getElementById("newsModal").addEventListener("click", (e) => {
-        if (e.target.id === "newsModal" || e.target.classList.contains("modal-close")) {
-          document.getElementById("newsModal").classList.remove("active");
+        const heading = document.querySelector(".timeline-section h3");
+        if (heading) {
+          heading.textContent = `Timeline - ${tag}`;
         }
-      });
 
-      // Carrega timeline ao entrar na página
-      document.addEventListener("DOMContentLoaded", loadTimeline);
+        if (visibleCount === 0) {
+          const list = document.querySelector(".timeline-list");
+          if (list && !document.querySelector(".timeline-empty-state")) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "timeline-empty-state";
+            emptyState.innerHTML = `
+              <p class="timeline-empty">Nenhuma notícia encontrada para "${tag}".</p>
+              <a href="timeline.html" class="timeline-reset-link">Zerar busca e mostrar todas as notícias</a>
+            `;
+            list.insertAdjacentElement("afterend", emptyState);
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", applyTimelineTagFilter);
     </script>
   </body>
 </html>
