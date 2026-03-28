@@ -161,7 +161,7 @@ Com GitHub Actions, você automatiza repetições e ganha tempo para focar no qu
     source: "Blog",
     image: "imagens/card2.png",
     tags: "github, ci/cd, automação, devops, actions, github actions",
-    url: "artigo-github-actions.html",
+    url: "artigo-github-index-vermelho.html",
     featured: false
   },
   {
@@ -221,7 +221,7 @@ Um bom fluxo Git melhora a colaboração e reduz bugs em produção!`,
     source: "Blog",
     image: "imagens/card3.png",
     tags: "git, github, versionamento, devops, colabolação, boas práticas",
-    url: "artigo-git-boas-praticas.html",
+    url: "artigo-github-index-verde.html",
     featured: false
   },
   {
@@ -289,7 +289,7 @@ Azure App Service remove a complexidade de DevOps iniciante e deixa você focar 
     source: "Blog",
     image: "imagens/card1.png",
     tags: "azure, app service, paas, deploy, cloud, microsoft",
-    url: "artigo-azure-app-service.html",
+    url: "artigo-azure-index-azul.html",
     featured: false
   },
   {
@@ -365,7 +365,7 @@ Azure Table Storage alimenta aplicações em escala global com simplicidade e cu
     source: "Blog",
     image: "imagens/card2.png",
     tags: "azure, table storage, nosql, banco dados, cloud, armazenamento",
-    url: "artigo-azure-table-storage.html",
+    url: "artigo-azure-index-amarelo.html",
     featured: false
   }
 ];
