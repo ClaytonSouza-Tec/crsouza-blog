@@ -34,7 +34,38 @@ body {
 }
 
 .header-top {
+  position: relative;
   padding: 2rem 0 1.5rem;
+}
+
+.header-subscribers-wrap {
+  position: absolute;
+  top: 50%;
+  right: -132px;
+  transform: translateY(-50%);
+  width: 122px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.7rem 0.6rem;
+  text-align: center;
+}
+
+.header-subscribers-label {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.header-subscribers-count {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
 }
 
 .header-top h1 {

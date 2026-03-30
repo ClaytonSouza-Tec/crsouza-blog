@@ -9,6 +9,7 @@ const {
   removeSubscriber,
   addComment,
   listComments,
+  listSubscribers,
   isAzureStorageConfigured
 } = require("./lib/subscribers");
 const {
@@ -325,6 +326,16 @@ app.get("/api/comments", async (req, res) => {
   } catch (error) {
     console.error("Erro ao buscar comentários:", error.message || error);
     res.status(500).json({ error: "Falha ao buscar comentários." });
+  }
+});
+
+app.get("/api/subscribers/count", async (req, res) => {
+  try {
+    const subscribers = await listSubscribers();
+    res.status(200).json({ count: subscribers.length });
+  } catch (error) {
+    console.error("Erro ao contar inscritos:", error.message || error);
+    res.status(500).json({ error: "Falha ao buscar contagem de inscritos." });
   }
 });
 

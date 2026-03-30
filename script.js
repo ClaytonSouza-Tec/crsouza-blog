@@ -440,6 +440,20 @@ function initSearch() {
   });
 }
 
+function initSubscriberCount() {
+  const el = document.getElementById("subscriberCount");
+  if (!el) return;
+
+  fetch("/api/subscribers/count")
+    .then((res) => res.json())
+    .then((data) => {
+      el.textContent = typeof data.count === "number" ? data.count.toLocaleString("pt-BR") : "—";
+    })
+    .catch(() => {
+      el.textContent = "—";
+    });
+}
+
 function init() {
   initAnalytics();
   initCarousel();
@@ -447,6 +461,7 @@ function init() {
   initSubscription();
   renderCommentsOnTipsPage();
   initSearch();
+  initSubscriberCount();
 }
 
 document.addEventListener("DOMContentLoaded", init);
