@@ -37,6 +37,72 @@ function stripHtml(text) {
     .trim();
 }
 
+function extractFirstMatch(content, pattern) {
+  const match = content.match(pattern);
+  return match ? stripHtml(match[1]) : "";
+}
+
+function buildArticleMetaFromFile(relativePath) {
+  const normalizedPath = String(relativePath || "").replace(/\\/g, "/").trim();
+  const absolutePath = path.join(REPO_ROOT, normalizedPath);
+
+  if (!fs.existsSync(absolutePath)) {
+    return null;
+  }
+
+  const articleHtml = fs.readFileSync(absolutePath, "utf8");
+  const title = extractFirstMatch(articleHtml, /<h1>([\s\S]*?)<\/h1>/i);
+  const summary = extractFirstMatch(articleHtml, /<p class="artigo-subtitulo">([\s\S]*?)<\/p>/i);
+  const meta = extractFirstMatch(articleHtml, /<span class="artigo-data">([\s\S]*?)<\/span>/i);
+  const imageMatch = articleHtml.match(/<img[^>]*class="artigo-imagem"[^>]*src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>/i);
+  const image = imageMatch ? String(imageMatch[1] || "").trim() : "";
+  const imageAlt = imageMatch ? stripHtml(imageMatch[2]) : "";
+
+  if (!title) {
+    return null;
+  }
+
+  return {
+    title,
+    summary,
+    meta,
+    image,
+    imageAlt,
+    url: `${relativePath}`
+  };
+}
+
+function getChangedFilesForCommit(commitHash) {
+  const safeHash = String(commitHash || "").trim();
+  if (!safeHash || safeHash.startsWith("manual-")) {
+    return [];
+  }
+
+  const output = runGitCommand(["show", "--name-only", "--pretty=format:", safeHash]);
+  if (!output) {
+    return [];
+  }
+
+  return output
+    .split(/\r?\n/g)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function extractUpdatedNewsFromCommit(commitHash) {
+  const changedFiles = getChangedFilesForCommit(commitHash);
+
+  const articleFilePattern = /^artigo-[a-z0-9\-]+\.html$/i;
+  const articleFiles = changedFiles.filter((filePath) => articleFilePattern.test(filePath));
+
+  const uniqueArticleFiles = Array.from(new Set(articleFiles));
+  const items = uniqueArticleFiles
+    .map((filePath) => buildArticleMetaFromFile(filePath))
+    .filter(Boolean);
+
+  return items;
+}
+
 function extractCarouselNews() {
   const homePage = fs.readFileSync(HOME_PAGE_PATH, "utf8");
   const matches = Array.from(
@@ -138,7 +204,18 @@ async function main() {
     return;
   }
 
-  const newsItems = extractCarouselNews();
+  let newsItems = [];
+
+  if (forceMode) {
+    newsItems = extractCarouselNews();
+  } else {
+    newsItems = extractUpdatedNewsFromCommit(commitDecision.commitHash);
+  }
+
+  if (!newsItems.length) {
+    console.log("[NEWSLETTER] Nenhum artigo atualizado foi encontrado no commit NEWS UPDATES. Envio ignorado.");
+    return;
+  }
 
   try {
     await initializeDataStore();

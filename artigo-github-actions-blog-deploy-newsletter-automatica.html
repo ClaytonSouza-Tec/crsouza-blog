@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Actions no Blog: Deploy e Newsletter Automatica | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source github-source"><i class="fab fa-github"></i> GitHub</span>
+          <span class="artigo-data">30 março, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 6 min de leitura</span>
+        </div>
+        <h1>GitHub Actions no Blog: Deploy e Newsletter Automatica</h1>
+        <p class="artigo-subtitulo">Neste artigo, mostro o workflow real da nossa aplicacao: build, deploy no Azure App Service e envio de newsletter por e-mail quando o commit e NEWS UPDATES.</p>
+      </div>
+
+      <img src="imagens/artigo/artigoindexvermelho.webp" alt="GitHub Actions CI/CD pipeline" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Visao geral do fluxo na nossa aplicacao</h2>
+        <p>No nosso projeto, o GitHub Actions faz mais do que CI/CD padrao. O pipeline publica o site no Azure App Service e, em um cenario especifico, tambem dispara o envio de newsletter para todos os inscritos da tabela <code>Subscribers</code> no Azure Table Storage.</p>
+        <ul>
+          <li><strong>Push na main:</strong> build e deploy automatico</li>
+          <li><strong>Commit NEWS UPDATES:</strong> leitura das noticias do carrossel + envio de e-mail para inscritos</li>
+          <li><strong>Sem sobrescrever historico:</strong> novas noticias entram e as antigas permanecem na timeline</li>
+        </ul>
+
+        <h2>Como configurei o workflow para disparo automatico</h2>
+        <p>Criei um arquivo de workflow no <code>.github/workflows/</code> que fica de olho na branch <code>main</code>. Sempre que faço um push, o GitHub Actions automaticamente pega o codigo, configura uma maquina com Node.js 20, roda <code>npm install</code> para instalar dependencias, executa o build e roda os testes. Se tudo passar, seguimos para o proximo passo. Se algo quebrar, recebo a notificacao e posso corrigir.</p>
+        <pre><code>on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+      - run: npm install &amp;&amp; npm run build &amp;&amp; npm run test</code></pre>
+
+        <h2>Como configurei o deploy automatico no Azure</h2>
+        <p>Depois que o build passa com sucesso, um segundo trabalho entra em acao para fazer o deploy. Configurei as credenciais do Azure (client ID, tenant ID e subscription ID) como segredos no GitHub para manter seguro. Com essas credenciais, faco login no Azure e uso a acao oficial de deploy para publicar a aplicacao no meu App Service chamado <code>app-crsouza-blog</code>. O Azure recebe os arquivos compilados e coloca online em producao.</p>
+        <pre><code>- name: Login to Azure
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+- name: Deploy to Azure Web App
+  uses: azure/webapps-deploy@v3
+  with:
+    app-name: app-crsouza-blog
+    slot-name: Production
+    package: .</code></pre>
+
+        <h2>Quando disparo a newsletter</h2>
+        <p>A parte mais legal da minha automacao eh que nao envio email a cada deploy. Criei uma condicao especifica: a newsletter so dispara se a mensagem do commit for exatamente <code>NEWS UPDATES</code>. Assim, posso fazer quantos deploys quiser sem enviar emails desnecessarios para os inscritos. Quando realmente tenho uma noticia nova, uso aquela mensagem especial de commit e o sistema pega todas as noticias do carrossel do site e envia para todos de uma vez.</p>
+        <pre><code>- name: Send Newsletter For NEWS UPDATES
+  if: github.event_name == 'push' &amp;&amp; 
+      github.event.head_commit.message == 'NEWS UPDATES'
+  env:
+    NEWSLETTER_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+  run: node scripts/send-newsletter-on-update.js</code></pre>
+
+        <h2>Como funciona o envio da newsletter</h2>
+        <p>Criei um script no Node.js que faz o trabalho pesado. Quando disparado, ele lê todas as noticias que coloquei no carrossel do site, depois consulta a tabela de inscritos no Azure Table Storage para pegar a lista completa de e-mails. Para cada pessoa inscrita, constroi um email personalizado com as noticias e envia via Azure Communication Services. Tudo isso acontece em alguns segundos, sem nenhuma intervencao manual minha.</p>
+        <pre><code>const newsItems = extractCarouselNews();
+await initializeDataStore();
+const subscribers = await listSubscribers();
+
+for (const subscriber of subscribers) {
+  await sendNewsUpdateEmail({
+    name: subscriber.name,
+    email: subscriber.email,
+    newsItems: newsItems
+  });
+}</code></pre>
+
+        <h2>Ponto importante de operacao</h2>
+        <p>Para evitar reenvio duplicado no mesmo commit, o script grava o hash no arquivo de cache <code>.cache/last-newsletter-commit.txt</code>. Se o mesmo hash reaparecer, o envio e ignorado.</p>
+
+        <h2>Conclusao</h2>
+        <p>Esse desenho de GitHub Actions ficou ideal para o blog: deploy automatico no Azure para cada entrega e newsletter automatizada apenas quando ha atualizacao de noticias. Resultado: menos operacao manual, mais consistencia e comunicacao rapida com os inscritos.</p>
+
+        <h2>Referencias</h2>
+        <ul>
+          <li><a href="https://docs.github.com/pt/actions" target="_blank" rel="noopener noreferrer">Documentacao oficial do GitHub Actions</a></li>
+          <li><a href="https://github.com/Azure/webapps-deploy" target="_blank" rel="noopener noreferrer">Azure Web Apps Deploy Action</a></li>
+          <li><a href="https://learn.microsoft.com/azure/app-service/deploy-github-actions" target="_blank" rel="noopener noreferrer">Deploy no Azure App Service com GitHub Actions</a></li>
+          <li><a href=".github/workflows/main_app-crsouza-blog.yml">Workflow deste projeto</a></li>
+          <li><a href="scripts/send-newsletter-on-update.js">Script de newsletter deste projeto</a></li>
+        </ul>
+      </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
