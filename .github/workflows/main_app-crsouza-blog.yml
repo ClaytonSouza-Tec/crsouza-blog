@@ -54,9 +54,15 @@ jobs:
           name: node-app
 
       - name: Capture changed files in push
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATES')
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATE')
         run: |
-          git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" > changed-files.txt
+          jq -r '.commits[] | (.added[]?, .modified[]?, .removed[]?)' "$GITHUB_EVENT_PATH" \
+            | sed '/^$/d' \
+            | sort -u > changed-files.txt
+
+          echo "Changed files captured for newsletter:" 
+          cat changed-files.txt
+
           {
             echo "NEWSLETTER_CHANGED_FILES<<EOF"
             cat changed-files.txt
@@ -79,7 +85,7 @@ jobs:
           package: .
 
       - name: Load App Settings For Newsletter
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATES')
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATE')
         run: |
           az webapp config appsettings list \
             --name app-crsouza-blog \
@@ -92,7 +98,7 @@ jobs:
           done < appsettings.tsv
 
       - name: Send Newsletter For NEWS UPDATES
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATES')
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'NEWS UPDATE')
         env:
           NEWSLETTER_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           NEWSLETTER_COMMIT_HASH: ${{ github.sha }}

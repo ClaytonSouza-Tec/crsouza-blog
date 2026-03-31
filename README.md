@@ -53,8 +53,8 @@ Fluxo de runtime:
 Fluxo de newsletter por atualizacao de conteudo:
 1. Push na branch `main`.
 2. Workflow de deploy publica o app no Azure App Service.
-3. Se o commit for `NEWS UPDATES`, o workflow executa o script de newsletter.
-4. Script le noticias do carrossel em `index.html`, busca inscritos no Table Storage e envia e-mails pelo ACS Email.
+3. Se o commit contiver `NEWS UPDATE`, o workflow executa o script de newsletter.
+4. Script cruza os arquivos alterados no commit com os 7 artigos monitorados (`index.html` + `dicas.html`), busca inscritos no Table Storage e envia apenas os artigos alterados pelo ACS Email.
 
 ## Estrutura do repositorio
 

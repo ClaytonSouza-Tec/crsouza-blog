@@ -14,6 +14,7 @@ const { isMailConfigured, sendNewsUpdateEmail } = require("../lib/mail-service")
 
 const REPO_ROOT = path.join(__dirname, "..");
 const HOME_PAGE_PATH = path.join(REPO_ROOT, "index.html");
+const TIPS_PAGE_PATH = path.join(REPO_ROOT, "dicas.html");
 const CACHE_DIR = path.join(REPO_ROOT, ".cache");
 const LAST_SENT_COMMIT_PATH = path.join(CACHE_DIR, "last-newsletter-commit.txt");
 
@@ -40,6 +41,33 @@ function stripHtml(text) {
 function extractFirstMatch(content, pattern) {
   const match = content.match(pattern);
   return match ? stripHtml(match[1]) : "";
+}
+
+function normalizeRelativeFilePath(value) {
+  return String(value || "")
+    .trim()
+    .replace(/^"|"$/g, "")
+    .replace(/^\.\//, "")
+    .replace(/\\/g, "/");
+}
+
+function extractArticleLinksFromPage(pagePath) {
+  if (!fs.existsSync(pagePath)) {
+    return [];
+  }
+
+  const html = fs.readFileSync(pagePath, "utf8");
+  const matches = Array.from(html.matchAll(/href="([^"]*artigo-[^"]+\.html)"/gi));
+
+  return matches
+    .map((match) => normalizeRelativeFilePath(match[1]))
+    .filter((href) => /^artigo-[a-z0-9\-]+\.html$/i.test(href));
+}
+
+function getTrackedArticlePaths() {
+  const indexArticles = extractArticleLinksFromPage(HOME_PAGE_PATH);
+  const dicasArticles = extractArticleLinksFromPage(TIPS_PAGE_PATH);
+  return Array.from(new Set([...indexArticles, ...dicasArticles]));
 }
 
 function buildArticleMetaFromFile(relativePath) {
@@ -77,7 +105,7 @@ function getChangedFilesForCommit(commitHash) {
   if (envChangedFiles) {
     return envChangedFiles
       .split(/\r?\n|,/g)
-      .map((item) => item.trim())
+      .map((item) => normalizeRelativeFilePath(item))
       .filter(Boolean);
   }
 
@@ -100,44 +128,29 @@ function getChangedFilesForCommit(commitHash) {
 
   return output
     .split(/\r?\n/g)
-    .map((item) => item.trim())
+    .map((item) => normalizeRelativeFilePath(item))
     .filter(Boolean);
 }
 
 function extractUpdatedNewsFromCommit(commitHash) {
   const changedFiles = getChangedFilesForCommit(commitHash);
+  const trackedArticlePaths = getTrackedArticlePaths();
+  const trackedSet = new Set(trackedArticlePaths);
 
-  const articleFilePattern = /(^|\/)artigo-[a-z0-9\-]+\.html$/i;
-  const articleFiles = changedFiles.filter((filePath) => articleFilePattern.test(filePath));
+  console.log(`[NEWSLETTER] Artigos monitorados (index + dicas): ${trackedArticlePaths.length}.`);
+  console.log(`[NEWSLETTER] Arquivos alterados identificados: ${changedFiles.length}.`);
 
-  const uniqueArticleFiles = Array.from(new Set(articleFiles));
+  const updatedTrackedArticleFiles = changedFiles.filter((filePath) => trackedSet.has(filePath));
+  console.log(`[NEWSLETTER] Artigos monitorados alterados no commit: ${updatedTrackedArticleFiles.length}.`);
+
+  const uniqueArticleFiles = Array.from(new Set(updatedTrackedArticleFiles));
   const items = uniqueArticleFiles
-    .map((filePath) => String(filePath || "").replace(/^\.\//, ""))
     .map((filePath) => buildArticleMetaFromFile(filePath))
     .filter(Boolean);
 
+  console.log(`[NEWSLETTER] Noticias elegiveis para envio: ${items.length}.`);
+
   return items;
-}
-
-function extractCarouselNews() {
-  const homePage = fs.readFileSync(HOME_PAGE_PATH, "utf8");
-  const matches = Array.from(
-    homePage.matchAll(
-      /<article class="carousel-slide[\s\S]*?<img[^>]*src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>[\s\S]*?<div class="slide-content">\s*<p class="slide-meta">([\s\S]*?)<\/p>\s*<h2>([\s\S]*?)<\/h2>\s*<p>([\s\S]*?)<\/p>[\s\S]*?<\/article>/g
-    )
-  );
-
-  if (matches.length < 4) {
-    throw new Error("Não foi possível localizar as 4 notícias do carrossel em index.html.");
-  }
-
-  return matches.slice(0, 4).map((match) => ({
-    image: String(match[1] || "").trim(),
-    imageAlt: stripHtml(match[2]),
-    meta: stripHtml(match[3]),
-    title: stripHtml(match[4]),
-    summary: stripHtml(match[5])
-  }));
 }
 
 function getOnlyEmailArgument() {
@@ -178,7 +191,7 @@ function shouldSendForCommit(forceMode) {
 
   const commitMessage = getCommitMessage();
   const normalizedCommitMessage = String(commitMessage || "").trim().toUpperCase();
-  if (!normalizedCommitMessage.includes("NEWS UPDATES")) {
+  if (!normalizedCommitMessage.includes("NEWS UPDATE")) {
     return {
       shouldSend: false,
       reason: `Commit ignorado: '${commitMessage}'.`
@@ -224,13 +237,17 @@ async function main() {
   let newsItems = [];
 
   if (forceMode) {
-    newsItems = extractCarouselNews();
+    const trackedArticlePaths = getTrackedArticlePaths();
+    newsItems = trackedArticlePaths
+      .map((filePath) => buildArticleMetaFromFile(filePath))
+      .filter(Boolean);
+    console.log(`[NEWSLETTER] Modo forçado: enviando todos os ${newsItems.length} artigos monitorados.`);
   } else {
     newsItems = extractUpdatedNewsFromCommit(commitDecision.commitHash);
   }
 
   if (!newsItems.length) {
-    console.log("[NEWSLETTER] Nenhum artigo atualizado foi encontrado no commit NEWS UPDATES. Envio ignorado.");
+    console.log("[NEWSLETTER] Nenhum artigo monitorado (index + dicas) foi atualizado no commit NEWS UPDATE(S). Envio ignorado.");
     return;
   }
 

@@ -50,7 +50,7 @@
         <p>No nosso projeto, o GitHub Actions faz mais do que CI/CD padrao. O pipeline publica o site no Azure App Service e, em um cenario especifico, tambem dispara o envio de newsletter para todos os inscritos da tabela <code>Subscribers</code> no Azure Table Storage.</p>
         <ul>
           <li><strong>Push na main:</strong> build e deploy automatico</li>
-          <li><strong>Commit NEWS UPDATES:</strong> leitura das noticias do carrossel + envio de e-mail para inscritos</li>
+          <li><strong>Commit NEWS UPDATE(S):</strong> envio apenas dos artigos alterados entre os 7 monitorados (4 da Home + 3 de Dicas)</li>
           <li><strong>Sem sobrescrever historico:</strong> novas noticias entram e as antigas permanecem na timeline</li>
         </ul>
 
@@ -72,7 +72,7 @@ jobs:
       - run: npm install &amp;&amp; npm run build &amp;&amp; npm run test</code></pre>
 
         <h2>Como configurei o deploy automatico no Azure</h2>
-        <p>Depois que o build passa com sucesso, um segundo trabalho entra em acao para fazer o deploy. Configurei as credenciais do Azure (client ID, tenant ID e subscription ID) como segredos no GitHub para manter seguro. Com essas credenciais, faco login no Azure e uso a acao oficial de deploy para publicar a aplicacao no meu App Service chamado <code>app-crsouza-blog</code>. O Azure recebe os arquivos compilados e coloca online em producao.</p>
+        <p>Depois que o build passa com sucesso, um segundo trabalhos entra em acao para fazer o deploy. Configurei as credenciais do Azure (client ID, tenant ID e subscription ID) como segredos no GitHub para manter seguro. Com essas credenciais, faco login no Azure e uso a acao oficial de deploy para publicar a aplicacao no meu App Service chamado <code>app-crsouza-blog</code>. O Azure recebe os arquivos compilados e coloca online em producao.</p>
         <pre><code>- name: Login to Azure
   uses: azure/login@v2
   with:
@@ -88,17 +88,17 @@ jobs:
     package: .</code></pre>
 
         <h2>Quando disparo a newsletter</h2>
-        <p>A parte mais legal da minha automacao eh que nao envio email a cada deploy. Criei uma condicao especifica: a newsletter so dispara se a mensagem do commit for exatamente <code>NEWS UPDATES</code>. Assim, posso fazer quantos deploys quiser sem enviar emails desnecessarios para os inscritos. Quando realmente tenho uma noticia nova, uso aquela mensagem especial de commit e o sistema pega todas as noticias do carrossel do site e envia para todos de uma vez.</p>
+        <p>A parte mais legal da minha automacao eh que nao envio email a cada deploy. Criei uma condicao especifica: a newsletter so dispara se a mensagem do commit contiver <code>NEWS UPDATE</code>. Assim, posso fazer quantos deploys quiser sem enviar emails desnecessarios para os inscritos. Quando realmente tenho noticia nova, altero os artigos desejados e uso essa mensagem no commit para enviar somente os artigos alterados entre os 7 monitorados.</p>
         <pre><code>- name: Send Newsletter For NEWS UPDATES
-  if: github.event_name == 'push' &amp;&amp; 
-      github.event.head_commit.message == 'NEWS UPDATES'
+  if: github.event_name == 'push' &amp;&amp; contains(github.event.head_commit.message, 'NEWS UPDATE')
   env:
     NEWSLETTER_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+    NEWSLETTER_COMMIT_HASH: ${{ github.sha }}
   run: node scripts/send-newsletter-on-update.js</code></pre>
 
         <h2>Como funciona o envio da newsletter</h2>
-        <p>Criei um script no Node.js que faz o trabalho pesado. Quando disparado, ele lê todas as noticias que coloquei no carrossel do site, depois consulta a tabela de inscritos no Azure Table Storage para pegar a lista completa de e-mails. Para cada pessoa inscrita, constroi um email personalizado com as noticias e envia via Azure Communication Services. Tudo isso acontece em alguns segundos, sem nenhuma intervencao manual minha.</p>
-        <pre><code>const newsItems = extractCarouselNews();
+        <p>Criei um script no Node.js que faz o trabalho pesado. Quando disparado, ele cruza os arquivos alterados do commit com a lista fixa dos 7 artigos monitorados (4 da Home e 3 da Dicas). Depois consulta a tabela de inscritos no Azure Table Storage para pegar a lista completa de e-mails. Para cada pessoa inscrita, constroi um email personalizado apenas com os artigos alterados e envia via Azure Communication Services.</p>
+        <pre><code>const newsItems = extractUpdatedNewsFromCommit(commitDecision.commitHash);
 await initializeDataStore();
 const subscribers = await listSubscribers();
 
@@ -106,7 +106,7 @@ for (const subscriber of subscribers) {
   await sendNewsUpdateEmail({
     name: subscriber.name,
     email: subscriber.email,
-    newsItems: newsItems
+    newsItems
   });
 }</code></pre>
 
