@@ -73,12 +73,27 @@ function buildArticleMetaFromFile(relativePath) {
 }
 
 function getChangedFilesForCommit(commitHash) {
+  const envChangedFiles = String(process.env.NEWSLETTER_CHANGED_FILES || "").trim();
+  if (envChangedFiles) {
+    return envChangedFiles
+      .split(/\r?\n|,/g)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
   const safeHash = String(commitHash || "").trim();
   if (!safeHash || safeHash.startsWith("manual-")) {
     return [];
   }
 
-  const output = runGitCommand(["show", "--name-only", "--pretty=format:", safeHash]);
+  let output = "";
+  try {
+    output = runGitCommand(["show", "--name-only", "--pretty=format:", safeHash]);
+  } catch (error) {
+    console.error("[NEWSLETTER] Falha ao ler arquivos alterados via git show:", error.message || error);
+    return [];
+  }
+
   if (!output) {
     return [];
   }
@@ -92,11 +107,12 @@ function getChangedFilesForCommit(commitHash) {
 function extractUpdatedNewsFromCommit(commitHash) {
   const changedFiles = getChangedFilesForCommit(commitHash);
 
-  const articleFilePattern = /^artigo-[a-z0-9\-]+\.html$/i;
+  const articleFilePattern = /(^|\/)artigo-[a-z0-9\-]+\.html$/i;
   const articleFiles = changedFiles.filter((filePath) => articleFilePattern.test(filePath));
 
   const uniqueArticleFiles = Array.from(new Set(articleFiles));
   const items = uniqueArticleFiles
+    .map((filePath) => String(filePath || "").replace(/^\.\//, ""))
     .map((filePath) => buildArticleMetaFromFile(filePath))
     .filter(Boolean);
 
@@ -161,7 +177,8 @@ function shouldSendForCommit(forceMode) {
   }
 
   const commitMessage = getCommitMessage();
-  if (commitMessage !== "NEWS UPDATES") {
+  const normalizedCommitMessage = String(commitMessage || "").trim().toUpperCase();
+  if (!normalizedCommitMessage.includes("NEWS UPDATES")) {
     return {
       shouldSend: false,
       reason: `Commit ignorado: '${commitMessage}'.`
@@ -262,5 +279,5 @@ async function main() {
 
 main().catch((error) => {
   console.error("[NEWSLETTER] Erro fatal:", error.message || error);
-  process.exit(0);
+  process.exit(1);
 });
