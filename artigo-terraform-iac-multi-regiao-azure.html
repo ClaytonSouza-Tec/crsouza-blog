@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arquitetura IaC Multi-Região com Terraform: Deploy Seguro no Azure | Blog Técnico</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source azure-source"><i class="fab fa-microsoft"></i> Azure</span>
+          <span class="artigo-data">2 abril, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 8 min de leitura</span>
+        </div>
+        <h1>Arquitetura IaC Multi-Região com Terraform: Deploy Seguro no Azure</h1>
+        <p class="artigo-subtitulo">Como estruturei uma infraestrutura Terraform modular para orquestrar múltiplos serviços Azure — de AI Foundry a Container Apps com ingress privado — e consegui fazer deploy em diferentes regiões e subscriptions com um único codebase.</p>
+      </div>
+
+      <img src="imagens/artigo/artigo-terraform-iac-multi-regiao.png" alt="Como o Terraform funciona" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Visão geral da solução</h2>
+        <p>Nos últimos meses, mergulhei fundo na construção de uma infraestrutura como código para um projeto Azure que foi crescendo conforme as necessidades. Começou com um módulo Terraform simples e foi evoluindo: AI Foundry com GPT-5.1, Virtual Network isolada, Key Vault, Managed Identities e, mais recentemente, Azure Container Apps com ingress privado.</p>
+        <p>O maior desafio era permitir deploy em diferentes regiões e subscriptions sem transformar a configuração num labirinto. A resposta que encontrei foi um módulo Terraform modular, com valores padrão sensatos, mas totalmente flexível via variáveis. Resultado: um único codebase, múltiplos ambientes.</p>
+
+        <h2>Como estruturei o projeto em camadas modulares</h2>
+        <p>Criei uma hierarquia de módulos que separa bem as responsabilidades:</p>
+        <pre><code>foundry-platform/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+└── resources/
+    ├── networking/
+    ├── keyvault/
+    ├── identity-rbac/
+    └── container-apps/</code></pre>
+        <p>Cada módulo é independente, com suas próprias variáveis, recursos e outputs. O módulo pai (<code>foundry-platform</code>) orquestra tudo, passando valores conforme necessário.</p>
+        <p>A grande vantagem dessa abordagem? Quando precisei adicionar Container Apps, bastou criar um novo submódulo sem tocar em nada do que já existia. Zero refatoração.</p>
+
+      <h2>Fluxo dos módulos (em português)</h2>
+      <p>Para facilitar a manutenção, organizei o fluxo em uma sequência simples e previsível. Assim, cada camada recebe o que precisa da camada anterior e entrega apenas o necessário para a próxima:</p>
+      <pre><code>[templates e variáveis]
+      ↓
+    [módulo pai: foundry-platform]
+      ↓
+    [networking] → [identity-rbac] → [keyvault]
+      ↓
+    [container-apps com ingress privado]
+      ↓
+    [aplicação publicada com acesso interno e autenticação segura no registry]</code></pre>
+      <p>Na prática, isso me permite evoluir a plataforma por blocos: adiciono um módulo novo, conecto os inputs e outputs e sigo sem quebrar o restante do ambiente.</p>
+
+        <h2>Adicionando Container Apps com ingress privado</h2>
+        <p>Quando surgiu a necessidade de rodar contêineres com imagem privada no ACR, a estrutura modular mostrou todo o seu valor. Resolvi tudo em três partes.</p>
+
+        <h3>1. Subnet delegada para Container Apps</h3>
+        <p>O primeiro passo foi estender o módulo de networking para criar uma subnet com delegação correta. Sem isso, o Container Apps não consegue se comunicar com a VNet:</p>
+        <pre><code>resource "azurerm_subnet" "container_apps" {
+  name                 = "snet-container-apps"
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = var.vnet_name
+  address_prefixes     = [var.container_apps_subnet_cidr]
+
+  delegation {
+    name = "delegation"
+    service_delegation {
+      name    = "Microsoft.App/environments"
+      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+    }
+  }
+}</code></pre>
+
+        <h3>2. Container Apps Environment com load balancer interno</h3>
+        <p>Criei o submódulo em <code>resources/container-apps/</code> para provisionar o ambiente. O ponto chave aqui é o <code>internal_load_balancer_enabled = true</code>, que garante que o ingress fica privado e sem exposição direta à internet:</p>
+        <pre><code>resource "azurerm_container_app_environment" "this" {
+  name                           = var.environment_name
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  infrastructure_subnet_id       = var.subnet_id
+  internal_load_balancer_enabled = true
+}</code></pre>
+
+        <h3>3. Container App com autenticação no ACR via Managed Identity</h3>
+        <p>A identidade gerenciada criada no submódulo <code>identity-rbac</code> é reaproveitada para puxar a imagem do ACR com segurança — sem senhas guardadas em lugar nenhum:</p>
+        <pre><code>resource "azurerm_container_app" "this" {
+  name                         = var.app_name
+  container_app_environment_id = azurerm_container_app_environment.this.id
+  resource_group_name          = var.resource_group_name
+  revision_mode                = "Single"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [var.managed_identity_id]
+  }
+
+  registry {
+    server   = var.acr_login_server
+    identity = var.managed_identity_id
+  }
+
+  ingress {
+    external_enabled = false
+    target_port      = var.container_port
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
+  template {
+    container {
+      name   = var.app_name
+      image  = var.container_image
+      cpu    = var.cpu
+      memory = var.memory
+
+      env {
+        name  = "ENVIRONMENT"
+        value = var.environment
+      }
+    }
+    min_replicas = var.min_replicas
+    max_replicas = var.max_replicas
+  }
+}</code></pre>
+        <ul>
+          <li><strong>external_enabled = false:</strong> ingress 100% privado, sem acesso direto pela internet</li>
+          <li><strong>registry com identidade gerenciada:</strong> pull do ACR automático e seguro, sem credenciais hardcoded</li>
+          <li><strong>CPU, memória e réplicas:</strong> tudo parametrizado via variáveis para cada ambiente</li>
+        </ul>
+
+        <h2>Deploy em múltiplas subscriptions</h2>
+        <p>Um dos requisitos era permitir deploy em regiões e subscriptions distintas com o mínimo de configuração. A solução ficou bem limpa: cada ambiente tem seu próprio arquivo <code>.tfvars</code>, com os valores específicos daquela subscription:</p>
+        <pre><code>location            = "brazilsouth"
+environment         = "dev"
+resource_group_name = "rg-platform-dev"
+vnet_address_space  = "10.0.0.0/16"</code></pre>
+        <p>Para trocar de subscription antes do deploy, executo este comando no terminal:</p>
+        <pre><code>az account set --subscription "subscription-alvo"</code></pre>
+        <p>Com isso, não preciso alterar o código Terraform. Só mudo o contexto do Azure CLI e sigo para o plan.</p>
+
+        <h2>Validação e segurança antes do apply</h2>
+        <p>Antes de qualquer <code>terraform apply</code>, sempre passo pelo pipeline de validação. Esses três comandos me salvaram várias vezes de subir configuração com erro de sintaxe ou recurso mal referenciado:</p>
+        <pre><code>terraform fmt -recursive
+terraform validate
+terraform plan -var-file="dev.tfvars" -out="tfplan"</code></pre>
+          <p>Para garantir permissão de pull no ACR, adicionei um <code>role_assignment</code> condicional. O <code>count</code> garante que o recurso só é criado quando a referência do ACR é informada; se não for, esse bloco é ignorado sem impacto no restante do ambiente:</p>
+        <pre><code>resource "azurerm_role_assignment" "acr_pull" {
+        count                = var.acr_reference != "" ? 1 : 0
+        scope                = var.acr_reference
+  role_definition_name = "AcrPull"
+        principal_id         = var.managed_identity_principal
+}</code></pre>
+
+        <h2>Conclusão</h2>
+        <p>Trabalhar com Terraform modular no Azure me trouxe resultados bem concretos:</p>
+        <ul>
+          <li>✅ Adicionei Container Apps sem quebrar o que já existia</li>
+          <li>✅ Mantive um único codebase rodando em múltiplas subscriptions</li>
+          <li>✅ Reaproveitei identidades, redes e permissões já provisionadas</li>
+          <li>✅ Deploy com ingress privado e autenticação segura no ACR</li>
+          <li>✅ Pipeline de validação antes de aplicar (GitOps-ready)</li>
+        </ul>
+        <p>A chave está na separação de responsabilidades: cada módulo faz uma coisa bem feita, e o módulo pai junta tudo. Quando você precisa de algo novo, é só estender — não refatorar o que já existe.</p>
+
+        <h2>Referências</h2>
+        <ul>
+          <li><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs" target="_blank" rel="noopener noreferrer">Terraform Azure Provider Documentation</a></li>
+          <li><a href="https://learn.microsoft.com/azure/container-apps/networking" target="_blank" rel="noopener noreferrer">Azure Container Apps Networking</a></li>
+          <li><a href="https://learn.microsoft.com/azure/container-registry/container-registry-authentication-managed-identity" target="_blank" rel="noopener noreferrer">Azure Container Registry Authentication with Managed Identity</a></li>
+          <li><a href="https://developer.hashicorp.com/terraform/language/modules/develop" target="_blank" rel="noopener noreferrer">Terraform Best Practices - Module Design</a></li>
+          <li><a href="https://learn.microsoft.com/azure/ai-foundry/what-is-azure-ai-foundry" target="_blank" rel="noopener noreferrer">Azure AI Foundry Documentation</a></li>
+        </ul>
+      </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
