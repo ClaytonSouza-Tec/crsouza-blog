@@ -226,70 +226,48 @@ Um bom fluxo Git melhora a colaboração e reduz bugs em produção!`,
   },
   {
     id: "news-blog-003",
-    title: "Introdução ao Azure App Service: deploy sem preocupações",
-    content: `Azure App Service é o serviço de hospedagem PaaS da Microsoft que transforma a forma como você faz deploy. Neste artigo, vou te mostrar como começar e por que você deveria estar usando.
+    title: "Hub-and-Spoke no Azure com inspeção centralizada por FortiGate NGFW",
+    content: `Estudo de caso técnico sobre uma arquitetura hub-and-spoke no Azure com firewall FortiGate NGFW em alta disponibilidade Active/Passive para inspeção de tráfego.
 
-## O que é Azure App Service?
+## Visão geral
 
-Azure App Service é uma plataforma gerenciada para construir e hospedar web apps, APIs e mobile backends.
+A topologia foi desenhada com um hub dedicado para rede e segurança, e dois spokes independentes em subscriptions separadas para produção e não-produção.
 
-**Características principais:**
-- Suporte a múltiplas linguagens (.NET, Node.js, Python, Java, PHP, Ruby)
-- Escalabilidade automática
-- CI/CD integrado com GitHub Actions
-- Domínios customizados e SSL gratuito
-- Staging slots para testes antes de produção
-- Backup e restore automático
+**Pilares do desenho:**
+- Sem peering direto entre spokes
+- UDR forçando inspeção no firewall
+- Cluster FortiGate Active/Passive com failover
+- Estados Terraform separados por ambiente
 
-## Criando seu primeiro App Service
+## Endereçamento
 
-1. **No portal Azure**
-   - Crie um novo App Service
-   - Escolha seu stack de runtime
-   - Selecione um plano de pricing
+- Spoke produção: 10.45.64.0/22
+- Spoke não-produção: 10.45.68.0/22
+- Hub Fortinet: 10.45.72.0/23
+- Reserva: 10.45.74.0/23
+- Supernet: 10.45.64.0/20
 
-2. **Configure seu repositório**
-   - Conecte seu GitHub
-   - Escolha a branch para deploy
-   - Defina configurações de build
+## Alta disponibilidade no hub
 
-3. **Deploy automático**
-   - A cada push na branch, seu app é deployado
-   - Você vê o status na aba "Deployments"
-   - Rollback rápido se necessário
+O cluster FortiGate foi implementado em Availability Set, com IP forwarding em todas as NICs e SDN Connector no FortiOS para failover dos Public IPs de WAN e VPN.
 
-## Configurações essenciais
+## Segurança em camadas
 
-- **Connection Strings**: banco de dados, storage, etc
-- **App Settings**: variáveis de ambiente
-- **Authentication**: integração com Azure AD, Google, GitHub
-- **CORS**: políticas de origem cruzada
-- **SSL Certificates**: HTTPS automático
+- Spokes sem Public IP
+- NSG por subnet
+- Roteamento forçado por UDR
+- Segmentação por subscriptions
+- Acesso administrativo via VPN/Bastion
 
-## Escalabilidade
+## Conclusão
 
-Com App Service, você não se preocupa com servidores:
-- Escalabilidade horizontal automática
-- Aumento de recursos em minutos
-- Balanceamento de carga automático
-- Monitoramento integrado
-
-## Exemplo: Deploy de Node.js
-
-Passos para deploy:
-1. Clone o repositório
-2. Execute npm install
-3. Configure variáveis de ambiente
-4. Deploy automático via GitHub Actions
-5. Seu app está online em minutos!
-
-Azure App Service remove a complexidade de DevOps iniciante e deixa você focar em código!`,
-    excerpt: "Descubra como hostear suas aplicações sem complexidade com Azure App Service.",
-    date: "2026-03-18T09:00:00Z",
+Hub-and-spoke com inspeção centralizada continua um padrão robusto para cenários que exigem controle L7 entre ambientes e trilha clara de governança de rede.`,
+    excerpt: "Arquitetura hub-and-spoke com FortiGate NGFW, UDR e isolamento por subscription para inspeção centralizada no Azure.",
+    date: "2026-05-12T09:00:00Z",
     source: "Blog",
-    image: "imagens/card1.png",
-    tags: "azure, app service, paas, deploy, cloud, microsoft",
-    url: "artigo-azure-app-service-deploy-sem-complexidade.html",
+    image: "imagens/artigo/artigo-terraform-iac-multi-regiao.png",
+    tags: "azure, hub and spoke, fortigate, ngfw, terraform, network security",
+    url: "artigo-blog-hub-spoke-fortigate.html",
     featured: false
   },
   {

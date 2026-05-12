@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hub-and-Spoke no Azure com inspeção centralizada por FortiGate NGFW | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source azure-source"><i class="fab fa-microsoft"></i> Azure</span>
+          <span class="artigo-data">12 maio, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 11 min de leitura</span>
+        </div>
+        <h1>Hub-and-Spoke no Azure com inspeção centralizada por FortiGate NGFW</h1>
+        <p class="artigo-subtitulo">Estudo de caso técnico sobre uma topologia com hub dedicado, spokes isolados por subscription e todo o tráfego leste-oeste e norte-sul forçado a passar por um cluster FortiGate em alta disponibilidade Active/Passive.</p>
+      </div>
+
+      <img src="imagens/artigo/artigo-terraform-iac-multi-regiao.png" alt="Arquitetura hub-and-spoke no Azure com FortiGate no hub" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Visão geral da topologia</h2>
+        <p>A arquitetura adota o padrão hub-and-spoke com separação clara entre plano de rede e plano de carga. O hub concentra serviços de segurança e conectividade, enquanto os spokes de produção e não-produção ficam em subscriptions independentes.</p>
+        <p>O objetivo principal foi garantir inspeção centralizada e previsibilidade de tráfego, evitando qualquer comunicação direta entre spokes fora do firewall.</p>
+
+        <h2>Desenho lógico</h2>
+        <ul>
+          <li>Hub dedicado para NGFW, VPN e management out-of-band.</li>
+          <li>Spoke de produção e spoke de não-produção com peering apenas com o hub.</li>
+          <li>Sem peering direto entre spokes.</li>
+          <li>Roteamento forçado por UDR para inspeção no FortiGate.</li>
+          <li>Estados Terraform separados por ambiente para reduzir blast radius.</li>
+        </ul>
+
+        <h2>Plano de endereçamento</h2>
+        <p>Os ambientes usam um supernet único <code>10.45.64.0/20</code> para simplificar sumarização em rotas e políticas:</p>
+        <ul>
+          <li><strong>Produção:</strong> <code>10.45.64.0/22</code></li>
+          <li><strong>Não-produção:</strong> <code>10.45.68.0/22</code></li>
+          <li><strong>Hub de rede:</strong> <code>10.45.72.0/23</code></li>
+          <li><strong>Reserva de expansão:</strong> <code>10.45.74.0/23</code></li>
+        </ul>
+        <p>No hub, as subnets foram segmentadas por função (outside, inside-prod, inside-nonprod, HA, VPN, transit e management), permitindo políticas por interface e telemetria mais precisa.</p>
+
+        <img src="imagens/artigo/artigoindexazul.png" alt="Segmentação de interfaces e zonas de tráfego no hub FortiGate" class="artigo-imagem" />
+
+        <h2>Alta disponibilidade no FortiGate</h2>
+        <p>O cluster foi implementado no modelo Active/Passive com 2 VMs FortiGate em Availability Set, cobrindo fault domains e update domains para reduzir indisponibilidade por falha de host ou manutenção da plataforma.</p>
+        <ul>
+          <li>7 NICs por VM para separar WAN, LANs, HA, VPN, transit e management.</li>
+          <li>IP forwarding habilitado em todas as NICs.</li>
+          <li>Managed Identity + role Network Contributor para failover automático de PIPs.</li>
+          <li>SDN Connector no FortiOS para realocação dos IPs públicos de WAN e VPN.</li>
+        </ul>
+        <p>Os IPs de management permanecem fixos por nó para acesso administrativo previsível, enquanto WAN/VPN fazem failover com troca automática de ancoragem.</p>
+
+        <h2>Como a inspeção é forçada</h2>
+        <p>Peering sozinho não resolve o requisito de inspeção. O desenho combina:</p>
+        <ol>
+          <li>Peering bidirecional apenas entre hub e cada spoke.</li>
+          <li><code>allow_forwarded_traffic = true</code> para permitir trânsito encaminhado pelo hub.</li>
+          <li>Route Tables com rotas privadas e default apontando para o FortiGate.</li>
+        </ol>
+        <p>Assim, mesmo tráfego entre spoke-prod e spoke-nonprod é redirecionado ao firewall, sem fast-path direto entre os ambientes.</p>
+
+        <h2>Defesa em camadas</h2>
+        <ul>
+          <li>Boundary de internet apenas no hub, com spokes sem Public IP.</li>
+          <li>Subscriptions separadas para Hub, Produção e Não-Produção.</li>
+          <li>NSGs por subnet como proteção de fallback.</li>
+          <li>Acesso administrativo sem exposição direta (VPN/Bastion).</li>
+          <li>State Terraform remoto com versionamento, soft-delete e TLS 1.2+.</li>
+        </ul>
+
+        <h2>Trade-offs de design</h2>
+        <p>As principais decisões equilibram segurança, operação e custo:</p>
+        <ul>
+          <li><strong>Estados Terraform separados:</strong> menor risco em alterações destrutivas, com maior esforço de coordenação entre ambientes.</li>
+          <li><strong>SKU maior no firewall:</strong> necessário por conta do número de NICs, com impacto direto no custo.</li>
+          <li><strong>Sem gateway transit nativo:</strong> VPN termina no FortiGate, simplificando a governança do perímetro.</li>
+          <li><strong>Management como NIC primária:</strong> melhora OOB e previsibilidade operacional.</li>
+        </ul>
+
+        <h2>Conclusão</h2>
+        <p>Hub-and-spoke com UDR + NGFW de terceiros continua sendo um padrão sólido no Azure quando o requisito é inspeção L7 centralizada entre ambientes. O ponto crítico é combinar corretamente peering, rotas e permissões de failover para garantir segurança sem comprometer a operabilidade.</p>
+        <p>Com isolamento por subscription e separação entre rede e cargas, a plataforma fica mais segura por padrão e mais simples de evoluir ao longo do tempo.</p>
+
+        <div class="artigo-tags-footer" aria-label="Tags do artigo">
+          <span class="artigo-chip">Azure</span>
+          <span class="artigo-chip">Hub and Spoke</span>
+          <span class="artigo-chip">FortiGate</span>
+          <span class="artigo-chip">Terraform</span>
+          <span class="artigo-chip">Network Security</span>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
