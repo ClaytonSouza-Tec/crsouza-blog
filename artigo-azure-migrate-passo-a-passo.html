@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azure Migrate: Passo a Passo para Migrar com Segurança | Clayton Rodrigues Souza</title>
+    <link rel="icon" type="image/png" href="imagens/icontinho.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  </head>
+  <body data-page="artigo">
+    <header class="site-header">
+      <div class="container header-top">
+        <h1>Clayton Rodrigues Souza</h1>
+        <p>Cloud Solutions Architect | DevOps | SRE | Technical Account Manager</p>
+      </div>
+      <div class="nav-wrapper">
+        <div class="container nav-bar">
+          <nav>
+            <a href="index.html">Início</a>
+            <a href="sobre.html">Sobre mim</a>
+            <a href="tinho.html">Sobre o Tinho</a>
+            <a href="eventos.html">Eventos</a>
+            <a href="dicas.html">Dicas</a>
+            <a href="timeline.html">Timeline</a>
+          </nav>
+          <div class="search-box">
+            <input type="search" id="globalSearch" placeholder="Buscar no blog" />
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container artigo-layout">
+      <div class="artigo-header">
+        <a href="index.html" class="artigo-voltar"><i class="fas fa-arrow-left"></i> Voltar ao início</a>
+        <div class="artigo-meta">
+          <span class="artigo-tag-source azure-source"><i class="fab fa-microsoft"></i> Azure</span>
+          <span class="artigo-data">9 junho, 2026</span>
+          <span class="artigo-leitura"><i class="fas fa-clock"></i> 9 min de leitura</span>
+        </div>
+        <h1>Azure Migrate: Passo a Passo para Migrar Servidores para o Azure</h1>
+        <p class="artigo-subtitulo">Um guia prático para inventariar, avaliar, replicar e executar cutover de workloads on-premises com o Azure Migrate.</p>
+      </div>
+
+      <img src="imagens/artigo/artigoazuremigrate.webp" alt="Migração de servidores para o Azure com Azure Migrate" class="artigo-imagem" />
+
+      <div class="artigo-conteudo">
+        <h2>Quando usar o Azure Migrate?</h2>
+        <p>Azure Migrate é a plataforma central da Microsoft para descoberta, avaliação e migração de servidores, bancos de dados e aplicações para o Azure. Ele reduz riscos porque permite validar sizing, custos e dependências antes de qualquer desligamento em produção.</p>
+        <p>Na prática, o fluxo recomendado é: <strong>descobrir</strong> o ambiente atual, <strong>avaliar</strong> impacto e custo, <strong>replicar</strong> as máquinas e só então fazer o <strong>cutover</strong>.</p>
+
+        <h2>Pré-requisitos antes de começar</h2>
+        <ul>
+          <li>Subscription Azure ativa com permissões para criar recursos</li>
+          <li>Resource Group dedicado para a migração</li>
+          <li>Conectividade entre ambiente local e Azure (VPN/ExpressRoute ou internet com portas liberadas)</li>
+          <li>Conta com acesso administrativo para instalar o appliance de descoberta</li>
+          <li>Planejamento de janela de mudança para o cutover</li>
+        </ul>
+
+        <h2>Passo 1: Criar o projeto no Azure Migrate</h2>
+        <ol>
+          <li>No portal Azure, busque por <strong>Azure Migrate</strong></li>
+          <li>Clique em <strong>Create project</strong></li>
+          <li>Selecione subscription, resource group, geografia e nome do projeto</li>
+          <li>Finalize em <strong>Review + Create</strong></li>
+        </ol>
+        <p>Esse projeto será o hub onde você acompanha descoberta, avaliação e status das ondas de migração.</p>
+
+        <h2>Passo 2: Configurar descoberta com o appliance</h2>
+        <p>O appliance é uma VM que coleta inventário e metadados de performance no seu datacenter. Para cenários VMware/Hyper-V, o procedimento é:</p>
+        <ol>
+          <li>No projeto, escolha <strong>Discovery and assessment</strong></li>
+          <li>Baixe o appliance correspondente ao seu ambiente</li>
+          <li>Implante a VM local e acesse o painel de configuração</li>
+          <li>Registre o appliance com a chave gerada no Azure Migrate</li>
+          <li>Informe credenciais de descoberta para mapear as VMs</li>
+        </ol>
+        <p>Após alguns minutos, as máquinas descobertas começam a aparecer no inventário do projeto.</p>
+
+        <h2>Passo 3: Criar assessments (sizing e custo)</h2>
+        <p>Com o inventário pronto, o próximo passo é montar uma avaliação para simular a execução no Azure.</p>
+        <ol>
+          <li>Abra <strong>Assessments</strong> e clique em <strong>Create assessment</strong></li>
+          <li>Defina o tipo de ambiente (VMware, Hyper-V ou físico)</li>
+          <li>Escolha critério de sizing: por performance (recomendado) ou on-premises</li>
+          <li>Selecione região alvo, tipo de storage e política de reserva</li>
+          <li>Revise readiness, custo estimado e dependências</li>
+        </ol>
+        <p>Use esse relatório para priorizar quick wins e separar workloads que precisam de remediação prévia.</p>
+
+        <h2>Passo 4: Preparar replicação para Azure VM</h2>
+        <p>Depois da avaliação, inicie a replicação das máquinas para o Azure com o serviço de migração de servidores.</p>
+        <ol>
+          <li>No projeto, acesse <strong>Azure Migrate: Server Migration</strong></li>
+          <li>Selecione <strong>Replicate</strong> e escolha as VMs de origem</li>
+          <li>Defina subscription, VNet, subnet e resource group de destino</li>
+          <li>Escolha tamanho da VM no Azure e opções de disco</li>
+          <li>Inicie a replicação contínua</li>
+        </ol>
+        <p>Esse processo mantém as alterações sincronizadas até o momento do corte final.</p>
+
+        <h2>Passo 5: Test migration (obrigatório)</h2>
+        <p>Antes do corte real, execute um teste para validar rede, aplicação e acesso sem impactar produção.</p>
+        <ol>
+          <li>Em cada VM replicada, clique em <strong>Test migrate</strong></li>
+          <li>Use uma VNet de teste isolada</li>
+          <li>Valide inicialização, serviços, portas e autenticação</li>
+          <li>Documente ajustes necessários e execute novo teste se preciso</li>
+        </ol>
+        <p>Somente após esse checklist a migração deve avançar para cutover.</p>
+
+        <h2>Passo 6: Cutover e pós-migração</h2>
+        <ol>
+          <li>Agende a janela de mudança com os times envolvidos</li>
+          <li>Interrompa serviços na origem conforme o runbook</li>
+          <li>Execute <strong>Migrate</strong> para promover a réplica no Azure</li>
+          <li>Valide aplicação, DNS, monitoramento e backups</li>
+          <li>Se tudo estiver estável, faça o decommission da origem</li>
+        </ol>
+        <p>Após o cutover, habilite monitoramento com Azure Monitor e proteja os dados com Azure Backup para fechar o ciclo operacional.</p>
+
+        <h2>Boas práticas para reduzir risco</h2>
+        <ul>
+          <li>Migre por ondas pequenas, começando por sistemas menos críticos</li>
+          <li>Padronize naming, tags e políticas de governança antes do cutover</li>
+          <li>Use grupos de aplicação para preservar dependências entre VMs</li>
+          <li>Mantenha runbook com plano de rollback por workload</li>
+          <li>Revise custo real pós-migração para aplicar right-sizing</li>
+        </ul>
+
+        <h2>Conclusão</h2>
+        <p>Azure Migrate organiza a jornada de migração em etapas previsíveis, com visibilidade técnica e financeira desde o início. Com descoberta correta, assessment bem calibrado e testes de migração, você reduz indisponibilidade e acelera a transição para o Azure com muito mais segurança.</p>
+      </div>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-icons">
+        <a href="https://www.linkedin.com/in/clayton-rodrigues-souza-5276b875/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        <a href="https://learn.microsoft.com/pt-br/users/claytonrodriguessouza-7987/transcript/vnmmpfr9m6xo0mg" target="_blank" rel="noopener noreferrer" aria-label="Microsoft Learn"><i class="fab fa-microsoft"></i></a>
+        <a href="https://www.udemy.com/user/clayton-souza-4/" target="_blank" rel="noopener noreferrer" aria-label="Udemy"><i class="fas fa-graduation-cap"></i></a>
+        <a href="https://www.instagram.com/techtinhoofc?utm_source=qr&igsh=ZGpzMTl0cmg1eXRq" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="https://www.credly.com/users/clayton-souza" target="_blank" rel="noopener noreferrer" aria-label="Credly"><i class="fas fa-certificate"></i></a>
+        <a href="https://www.youtube.com/@TechTinhoOFC" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://github.com/ClaytonSouza-Tec" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+      </div>
+      <p class="footer-credit">Developed by CRSouza &copy; 2026</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
